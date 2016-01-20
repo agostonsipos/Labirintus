@@ -1,0 +1,23 @@
+#version 130
+
+// VBO-ból érkezõ változók
+in vec3 vs_in_pos;
+in vec3 vs_in_normal;
+in vec2 vs_in_tex0;
+
+// a pipeline-ban tovább adandó értékek
+out vec3 vs_out_normal;
+out vec2 vs_out_tex0;
+out vec3 vs_out_pos;
+
+// shader külsõ paraméterei - most a három transzformációs mátrixot külön-külön vesszük át
+uniform mat4 MVP;
+uniform mat4 WorldIT;
+
+void main()
+{
+	gl_Position = MVP * vec4( vs_in_pos, 1 );
+	vs_out_normal  = (WorldIT * vec4(vs_in_normal,0)).xyz;
+	vs_out_tex0 = vs_in_tex0;
+	vs_out_pos = gl_Position.xyz;
+}
