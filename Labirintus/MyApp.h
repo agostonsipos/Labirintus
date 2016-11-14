@@ -85,6 +85,7 @@ protected:
 
 	// mátrixok helye a shaderekben
 	GLuint	m_loc_mvp;
+	GLuint  m_loc_world;
 	GLuint  m_loc_wit;
 	GLuint	m_loc_texture;
 	GLuint  m_loc_eye;

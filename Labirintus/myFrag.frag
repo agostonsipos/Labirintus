@@ -43,7 +43,7 @@ void main()
 			vec3 Slightdir = normalize(Sp - vs_out_pos);
 			vec3 r = normalize(reflect(-Slightdir,normalize(vs_out_normal)));
 			vec3 e = normalize(eye-vs_out_pos);
-			float si = dot(normalize(vs_out_normal),Slightdir)>=0 ? pow(clamp(dot(e,r),0,1),sp) : 0;
+			float si = pow(clamp(dot(e,r),0,1),sp);
 			specular = si*Ss*ks;
 		}
 	}
@@ -58,7 +58,7 @@ void main()
 			vec3 Mlightdir = normalize(Mp - vs_out_pos);
 			vec3 r = normalize(reflect(-Mlightdir,normalize(vs_out_normal)));
 			vec3 e = normalize(eye-vs_out_pos);
-			float mi = dot(normalize(vs_out_normal),Mlightdir)>=0 ? pow(clamp(dot(e,r),0,1),sp) : 0;
+			float mi = pow(clamp(dot(e,r),0,1),sp);
 			specular = mi*Ms*ks;
 		}
 	}

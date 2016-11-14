@@ -170,6 +170,7 @@ bool CMyApp::Init()
 
 	// shader-beli transzformációs mátrixok címének lekérdezése
 	m_loc_mvp = glGetUniformLocation( m_programID, "MVP");
+	m_loc_world = glGetUniformLocation(m_programID, "world");
 	m_loc_wit = glGetUniformLocation(m_programID, "WorldIT");
 
 	m_loc_texture = glGetUniformLocation( m_programID, "texture" );
@@ -346,14 +347,6 @@ void CMyApp::DrawGround()
 	glUniform4fv(m_loc_kd, 1, &glm::vec4(1.0, 1.0, 1.0, 1.0)[0]);
 
 	// shader parameterek beállítása
-	/*
-
-	GLM transzformációs mátrixokra példák:
-		glm::rotate<float>( szög, tengely_x, tengely_y, tengely_z) <- tengely_{xyz} körüli elforgatás
-		glm::translate<float>( eltol_x, eltol_y, eltol_z) <- eltolás
-		glm::scale<float>( s_x, s_y, s_z ) <- léptékezés
-
-	*/
 	
 	// aktiváljuk a 0-és textúra mintavételezõ egységet
 	glActiveTexture(GL_TEXTURE0);
@@ -377,8 +370,12 @@ void CMyApp::DrawGround()
 				GL_FALSE,	// NEM transzponálva
 				&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
 
+			glUniformMatrix4fv(m_loc_world,
+				1,
+				GL_FALSE,	// transzponálva
+				&(m_matWorld[0][0]));
 			glUniformMatrix4fv(m_loc_wit,
-				1,			
+				1,
 				GL_TRUE,	// transzponálva
 				&(WIT[0][0]));
 
@@ -410,6 +407,10 @@ void CMyApp::DrawBushes(){
 			1,			// egy darab mátrixot
 			GL_FALSE,	// NEM transzponálva
 			&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
+		glUniformMatrix4fv(m_loc_world,
+			1,
+			GL_FALSE,	// transzponálva
+			&(m_matWorld[0][0]));
 		glUniformMatrix4fv(m_loc_wit,
 			1,
 			GL_TRUE,	// transzponálva
@@ -433,6 +434,10 @@ void CMyApp::DrawCoins(){
 			1,			// egy darab mátrixot
 			GL_FALSE,	// NEM transzponálva
 			&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
+		glUniformMatrix4fv(m_loc_world,
+			1,
+			GL_FALSE,	// transzponálva
+			&(m_matWorld[0][0]));
 		glUniformMatrix4fv(m_loc_wit,
 			1,
 			GL_TRUE,	// transzponálva
@@ -449,13 +454,17 @@ void CMyApp::DrawDiamonds(){
 	for (auto it : m_list_diamonds){
 		glUseProgram(m_programID);
 		glUniform4fv(m_loc_kd, 1, &glm::vec4(2.0, 2.0, 3.0, 1.0)[0]);
-		m_matWorld = glm::translate<float>(it.x * 20, 2, it.y * 20)*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, 0, 1, 0)*glm::scale<float>(5, 5, 5);
-		glm::mat4 mvp = m_matProj * m_matView * m_matWorld*glm::rotate<float>(180, 1, 0, 0);
+		m_matWorld = glm::translate<float>(it.x * 20, 2, it.y * 20)*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, 0, 1, 0)*glm::scale<float>(5, 5, 5)*glm::rotate<float>(90, 1, 0, 0)*glm::scale<float>(2, 2, 2);
+		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
 		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
 			1,			// egy darab mátrixot
 			GL_FALSE,	// NEM transzponálva
 			&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
+		glUniformMatrix4fv(m_loc_world,
+			1,
+			GL_FALSE,	// transzponálva
+			&(m_matWorld[0][0]));
 		glUniformMatrix4fv(m_loc_wit,
 			1,
 			GL_TRUE,	// transzponálva
@@ -502,6 +511,10 @@ void CMyApp::DrawSuzanne()
 						1,			// egy darab mátrixot
 						GL_FALSE,	// NEM transzponálva
 						&(mvp[0][0]) ); // innen olvasva a 16 x sizeof(float)-nyi adatot
+	glUniformMatrix4fv(m_loc_world,
+		1,
+		GL_FALSE,	// transzponálva
+		&(m_matWorld[0][0]));
 	glUniformMatrix4fv(m_loc_wit,
 		1,
 		GL_TRUE,	// transzponálva
@@ -534,6 +547,10 @@ void CMyApp::DrawShots(){
 			1,			// egy darab mátrixot
 			GL_FALSE,	// NEM transzponálva
 			&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
+		glUniformMatrix4fv(m_loc_world,
+			1,
+			GL_FALSE,	// transzponálva
+			&(m_matWorld[0][0]));
 		glUniformMatrix4fv(m_loc_wit,
 			1,
 			GL_TRUE,	// transzponálva
@@ -641,15 +658,11 @@ void CMyApp::MouseWheel(SDL_MouseWheelEvent& wheel)
 {
 }
 
-// a két paraméterbe az új ablakméret szélessége (_w) és magassága (_h) található
 void CMyApp::Resize(int _w, int _h)
 {
 	glViewport(0, 0, _w, _h);
 
-	m_matProj = glm::perspective(  45.0f,		// 90 fokos nyilasszog
-									_w/(float)_h,	// ablakmereteknek megfelelo nezeti arany
-									0.01f,			// kozeli vagosik
-									10000.0f);		// tavoli vagosik
+	m_matProj = glm::perspective(45.0f, _w / (float)_h, 0.01f, 10000.0f);
 }
 
 void CMyApp::genBushes(){
@@ -659,18 +672,13 @@ void CMyApp::genBushes(){
 		m_list_bushes.insert({ 0, i, 1 });
 		m_list_bushes.insert({ i, 50, 0 });
 		m_list_bushes.insert({ 50, i, 1 });
-		for (int j = 1; j < 20; ++j){
-			Bush b = { rand() % 50, rand() % 50, rand() % 2 };
-			m_list_bushes.insert(b);
-		}
 	}
-	/*srand(time(NULL));
-	for (int i = 0; i < 1000; ++i){
-		do{
-			Bush b = { rand() % 50, rand() % 50, rand() % 2 };
-			m_list_bushes.insert(b);
-		} while (m_list_bushes.size() != i + 1);
-	}*/
+	int i=0;
+	do{
+		Bush b = { rand() % 50, rand() % 50, rand() % 2 };
+		m_list_bushes.insert(b);
+		++i;
+	} while (m_list_bushes.size() != 1000);
 }
 
 void CMyApp::genCoins(){
