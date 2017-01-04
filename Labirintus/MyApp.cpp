@@ -1,7 +1,7 @@
 #include "MyApp.h"
 #include "GLUtils.hpp"
 
-#include <GL/GLU.h>
+//#include <GL/GLU.h>
 #include <vector>
 #include <math.h>
 #include <ctime>
@@ -361,7 +361,7 @@ void CMyApp::DrawGround()
 
 	for (int i = 0; i < 50; ++i){
 		for (int j = 0; j < 50; ++j){
-			m_matWorld = glm::translate<float>(20 * i, 0, 20 * j);
+			m_matWorld = glm::translate<float>(glm::vec3(20.f * i, 0.f, 20.f * j));
 			glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 			glm::mat4 WIT = glm::inverse(m_matWorld);
 			// majd küldjük át a megfelelõ mátrixokat!
@@ -399,8 +399,8 @@ void CMyApp::DrawBushes(){
 	for (auto it : m_list_bushes){
 		glUseProgram(m_programID);
 		glUniform4fv(m_loc_kd, 1, &glm::vec4(0.0, 0.8, 0.0, 1.0)[0]);
-		m_matWorld = glm::translate<float>(it.ir?-10:0,0,it.ir?10:0)*glm::translate<float>(it.x*20, 0.0, it.y*20-10.0)*glm::rotate<float>(it.ir?90:0,0,1,0)
-			*glm::translate<float>(0,4,0)*glm::rotate<float>(90, 1, 0, 0)*glm::scale<float>(5.0, 3.0, 5.0);
+		m_matWorld = glm::translate<float>(glm::vec3(it.ir?-10:0,0,it.ir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.ir?90:0,glm::vec3(0,1,0))
+			*glm::translate<float>(glm::vec3(0,4,0))*glm::rotate<float>(90, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(5.0, 3.0, 5.0));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
 		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
@@ -427,7 +427,7 @@ void CMyApp::DrawCoins(){
 	for (auto it : m_list_coins){
 		glUseProgram(m_programID);
 		glUniform4fv(m_loc_kd, 1, &glm::vec4(1.0, 1.0, 0.0, 1.0)[0]);
-		m_matWorld = glm::translate<float>(it.x*20, 5, it.y*20)*glm::rotate<float>(2*3.14159*SDL_GetTicks()/100.0f,0,1,0)*glm::rotate<float>(90,1,0,0)*glm::scale<float>(5,5,5);
+		m_matWorld = glm::translate<float>(glm::vec3(it.x*20, 5, it.y*20))*glm::rotate<float>(2*3.14159*SDL_GetTicks()/100.0f,glm::vec3(0,1,0))*glm::rotate<float>(90,glm::vec3(1,0,0))*glm::scale<float>(glm::vec3(5,5,5));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
 		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
@@ -454,7 +454,7 @@ void CMyApp::DrawDiamonds(){
 	for (auto it : m_list_diamonds){
 		glUseProgram(m_programID);
 		glUniform4fv(m_loc_kd, 1, &glm::vec4(2.0, 2.0, 3.0, 1.0)[0]);
-		m_matWorld = glm::translate<float>(it.x * 20, 2, it.y * 20)*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, 0, 1, 0)*glm::scale<float>(5, 5, 5)*glm::rotate<float>(90, 1, 0, 0)*glm::scale<float>(2, 2, 2);
+		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5))*glm::rotate<float>(90, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(2, 2, 2));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
 		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
@@ -476,7 +476,7 @@ void CMyApp::DrawDiamonds(){
 		m_diamond->draw();
 	}
 }
-
+#include <iostream>
 void CMyApp::DrawSuzanne()
 {
 	// a mesh kirajzolasahoz hasznalt shader bekapcsolasa
@@ -488,22 +488,22 @@ void CMyApp::DrawSuzanne()
 
 	glm::mat4 jump;
 	if (moving[0] || moving[1] || moving[2] || moving[3]){
-		jump = glm::translate<float>(0, 3 * abs(sinf((SDL_GetTicks() - t0) * 4 * 3.14159f / 1000.0f)), 0);
+		jump = glm::translate<float>(glm::vec3(0, 3 * fabs(sinf((SDL_GetTicks() - t0) * 4 * 3.14159f / 1000.0f)), 0));
 		if (mega)
-			jump = glm::translate<float>(0, 3 * abs(sinf((SDL_GetTicks() - t0) * 4 * 3.14159f / 750.0f)), 0);
+			jump = glm::translate<float>(glm::vec3(0, 3 * fabs(sinf((SDL_GetTicks() - t0) * 4 * 3.14159f / 750.0f)), 0));
 	}
 	else if (win)
-		jump = glm::translate<float>(0, log1pf(money) * abs(sinf((SDL_GetTicks() - t0) * 4 * 3.14159f / 1000.0f)), 0);
+		jump = glm::translate<float>(glm::vec3(0, log1pf(money) * fabs(sinf((SDL_GetTicks() - t0) * 4 * 3.14159f / 1000.0f)), 0));
 	else if (lose)
-		jump = glm::rotate<float>(glm::clamp(-30.0f * (SDL_GetTicks() - tl) / 1000.0f, -30.0f, 0.0f), m_up.z, 0, -m_up.x);
+		jump = glm::rotate<float>(glm::clamp(-30.0f * (SDL_GetTicks() - tl) / 1000.0f, -30.0f, 0.0f), glm::vec3(m_up.z, 0, -m_up.x));
 	else jump = glm::mat4(1.0f);
 
 	glm::mat4 size;
 	if (mega)
-		size = glm::scale<float>(4.5f, 4.5f, 4.5f);
-	else size = glm::scale<float>(3, 3, 3);
+		size = glm::scale<float>(glm::vec3(4.5f, 4.5f, 4.5f));
+	else size = glm::scale<float>(glm::vec3(3, 3, 3));
 
-	m_matWorld = glm::translate<float>(suzpos.x*20, 3, suzpos.y*20)*jump*size*glm::rotate<float>(suzpos.ir*90,0,1,0);
+	m_matWorld = glm::translate<float>(glm::vec3(suzpos.x*20, 3, suzpos.y*20))*jump*size*glm::rotate<float>(suzpos.ir*90,glm::vec3(0,1,0));
 	glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 	glm::mat4 WIT = glm::inverse(m_matWorld);
 	// majd küldjük át a megfelelõ mátrixokat!
@@ -540,7 +540,7 @@ void CMyApp::DrawShots(){
 	for (auto it : m_list_shots){
 		glUseProgram(m_programID);
 		glUniform4fv(m_loc_kd, 1, &glm::vec4(2.0, 2.0, 3.0, 1.0)[0]);
-		m_matWorld = glm::translate<float>(it.x * 20, 2, it.y * 20)*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, 0, 1, 0)*glm::scale<float>(5, 5, 5);
+		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
 		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
