@@ -718,7 +718,7 @@ bool CMyApp::HitWall(Suzanne s){
 	if ((int)s.ir % 4 == 3){
 		z += Suzanne(-1.0f, 0.0f, 0.0f);
 	}
-	Bush w = { s.x >= z.x ? s.x : z.x, s.y >= z.y ? s.y : z.y, s.x == z.x ? 0 : 1 };
+	Bush w = { s.x >= z.x ? static_cast<int>(s.x) : static_cast<int>(z.x), s.y >= z.y ? static_cast<int>(s.y) : static_cast<int>(z.y), s.x == z.x ? 0 : 1 };
 	if (m_list_bushes.find(w) != m_list_bushes.end()){
 		m_list_bushes.erase(w);
 		return true;

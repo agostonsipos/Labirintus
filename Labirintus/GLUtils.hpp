@@ -21,7 +21,7 @@ GLuint loadShader(GLenum _shaderType, const char* _fileName)
 	// ha nem sikerult hibauzenet es -1 visszaadasa
 	if ( loadedShader == 0 )
 	{
-		fprintf(stderr, "Hiba a shader inicializálásakor (glCreateShader)!", _fileName);
+		fprintf(stderr, "Hiba a %s shader inicializálásakor (glCreateShader)!", _fileName);
 		return 0;
 	}
 	
