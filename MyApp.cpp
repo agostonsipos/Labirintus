@@ -1,7 +1,6 @@
 #include "MyApp.h"
 #include "GLUtils.hpp"
 
-//#include <GL/GLU.h>
 #include <vector>
 #include <math.h>
 #include <ctime>
@@ -29,116 +28,67 @@ CMyApp::~CMyApp(void)
 
 bool CMyApp::Init()
 {
-	// törlési szín legyen kékes
 	glClearColor(0.125f, 0.25f, 0.5f, 1.0f);
 
-	glEnable(GL_CULL_FACE); // kapcsoljuk be a hatrafele nezo lapok eldobasat
-	glEnable(GL_DEPTH_TEST); // mélységi teszt bekapcsolása (takarás)
-	glCullFace(GL_BACK); // GL_BACK: a kamerától "elfelé" nézõ lapok, GL_FRONT: a kamera felé nézõ lapok
-
-	//
-	// geometria letrehozasa
-	//
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+	glCullFace(GL_BACK);
 
 	Vertex vert[] =
 	{ 
-		//          x,  y, z               nx,ny,nz			 s, t
 		{glm::vec3(-10, 0, -10), glm::vec3( 0, 1, 0), glm::vec2(0, 0)},
 		{glm::vec3(-10, 0,  10), glm::vec3( 0, 1, 0), glm::vec2(0, 1)},
 		{glm::vec3( 10, 0, -10), glm::vec3( 0, 1, 0), glm::vec2(1, 0)},
 		{glm::vec3( 10, 0,  10), glm::vec3( 0, 1, 0), glm::vec2(1, 1)},
 	};
 
-	// indexpuffer adatai
     GLushort indices[]=
     {
-		// 1. háromszög
         0,1,2,
-		// 2. háromszög
         2,1,3,
     };
 
-	// 1 db VAO foglalasa
 	glGenVertexArrays(1, &m_vaoID);
-	// a frissen generált VAO beallitasa aktívnak
 	glBindVertexArray(m_vaoID);
 	
-	// hozzunk létre egy új VBO erõforrás nevet
 	glGenBuffers(1, &m_vboID); 
-	glBindBuffer(GL_ARRAY_BUFFER, m_vboID); // tegyük "aktívvá" a létrehozott VBO-t
-	// töltsük fel adatokkal az aktív VBO-t
-	glBufferData( GL_ARRAY_BUFFER,	// az aktív VBO-ba töltsünk adatokat
-				  sizeof(vert),		// ennyi bájt nagyságban
-				  vert,	// errõl a rendszermemóriabeli címrõl olvasva
-				  GL_STATIC_DRAW);	// úgy, hogy a VBO-nkba nem tervezünk ezután írni és minden kirajzoláskor felhasnzáljuk a benne lévõ adatokat
-	
+	glBindBuffer(GL_ARRAY_BUFFER, m_vboID);
+	glBufferData( GL_ARRAY_BUFFER, sizeof(vert), vert, GL_STATIC_DRAW);
 
-	// VAO-ban jegyezzük fel, hogy a VBO-ban az elsõ 3 float sizeof(Vertex)-enként lesz az elsõ attribútum (pozíció)
-	glEnableVertexAttribArray(0); // ez lesz majd a pozíció
-	glVertexAttribPointer(
-		0,				// a VB-ben található adatok közül a 0. "indexû" attribútumait állítjuk be
-		3,				// komponens szam
-		GL_FLOAT,		// adatok tipusa
-		GL_FALSE,		// normalizalt legyen-e
-		sizeof(Vertex),	// stride (0=egymas utan)
-		0				// a 0. indexû attribútum hol kezdõdik a sizeof(Vertex)-nyi területen belül
-	); 
+	// position attributes
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3,	GL_FLOAT, GL_FALSE,	sizeof(Vertex),	0); 
 
-	// a második attribútumhoz pedig a VBO-ban sizeof(Vertex) ugrás után sizeof(glm::vec3)-nyit menve újabb 3 float adatot találunk (szín)
-	glEnableVertexAttribArray(1); // ez lesz majd a szín
-	glVertexAttribPointer(
-		1,
-		3, 
-		GL_FLOAT,
-		GL_FALSE,
-		sizeof(Vertex),
-		(void*)(sizeof(glm::vec3)) );
+	//surface normal attributes
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,	sizeof(Vertex),	(void*)(sizeof(glm::vec3)) );
 
-	// textúrakoordináták bekapcsolása a 2-es azonosítójú attribútom csatornán
+	//texture coordinates
 	glEnableVertexAttribArray(2); 
-	glVertexAttribPointer(
-		2,
-		2, 
-		GL_FLOAT,
-		GL_FALSE,
-		sizeof(Vertex),
-		(void*)(2*sizeof(glm::vec3)) );
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(glm::vec3)) );
 
-	// index puffer létrehozása
 	glGenBuffers(1, &m_ibID);
-	// a VAO észreveszi, hogy bind-olunk egy index puffert és feljegyzi, hogy melyik volt ez!
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibID);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glBindVertexArray(0); // feltöltüttük a VAO-t, kapcsoljuk le
-	glBindBuffer(GL_ARRAY_BUFFER, 0); // feltöltöttük a VBO-t is, ezt is vegyük le
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); // feltöltöttük a VBO-t is, ezt is vegyük le
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	
+	GLuint vs_ID = loadShader(GL_VERTEX_SHADER,		"shader.vert");
+	GLuint fs_ID = loadShader(GL_FRAGMENT_SHADER,	"shader.frag");
 
-	//
-	// shaderek betöltése
-	//
-	GLuint vs_ID = loadShader(GL_VERTEX_SHADER,		"myVert.vert");
-	GLuint fs_ID = loadShader(GL_FRAGMENT_SHADER,	"myFrag.frag");
-
-	// a shadereket tároló program létrehozása
 	m_programID = glCreateProgram();
 
-	// adjuk hozzá a programhoz a shadereket
 	glAttachShader(m_programID, vs_ID);
 	glAttachShader(m_programID, fs_ID);
 
-	// VAO-beli attribútumok hozzárendelése a shader változókhoz
-	// FONTOS: linkelés elõtt kell ezt megtenni!
-	glBindAttribLocation(	m_programID,	// shader azonosítója, amibõl egy változóhoz szeretnénk hozzárendelést csinálni
-							0,				// a VAO-beli azonosító index
-							"vs_in_pos");	// a shader-beli változónév
+	glBindAttribLocation( m_programID, 0, "vs_in_pos");
 	glBindAttribLocation( m_programID, 1, "vs_in_normal");
 	glBindAttribLocation( m_programID, 2, "vs_in_tex0");
 
-	// illesszük össze a shadereket (kimenõ-bemenõ változók összerendelése stb.)
 	glLinkProgram(m_programID);
 
-	// linkeles ellenorzese
 	GLint infoLogLength = 0, result = 0;
 
 	glGetProgramiv(m_programID, GL_LINK_STATUS, &result);
@@ -152,23 +102,16 @@ bool CMyApp::Init()
 		char* aSzoveg = new char[ProgramErrorMessage.size()];
 		memcpy( aSzoveg, &ProgramErrorMessage[0], ProgramErrorMessage.size());
 
-		std::cout << "[app.Init()] Sáder Huba panasza: " << aSzoveg << std::endl;
+		std::cout << "[app.Init()] Shader error: " << aSzoveg << std::endl;
 
 		delete aSzoveg;
 	}
 
-	// mar nincs ezekre szukseg
 	glDeleteShader( vs_ID );
 	glDeleteShader( fs_ID );
 
-	//
-	// egyéb inicializálás
-	//
-
-	// vetítési mátrix létrehozása
 	m_matProj = glm::perspective( 45.0f, 640/480.0f, 1.0f, 10000.0f );
 
-	// shader-beli transzformációs mátrixok címének lekérdezése
 	m_loc_mvp = glGetUniformLocation( m_programID, "MVP");
 	m_loc_world = glGetUniformLocation(m_programID, "world");
 	m_loc_wit = glGetUniformLocation(m_programID, "WorldIT");
@@ -182,11 +125,8 @@ bool CMyApp::Init()
 
 	m_loc_kd = glGetUniformLocation(m_programID, "kd");
 	m_loc_ks = glGetUniformLocation(m_programID, "ks");
-	//
-	// egyéb erõforrások betöltése
-	//
 
-	// textúra betöltése
+
 	m_floor_textureID = TextureFromFile("floor.bmp");
 	m_bush_texture_ID = TextureFromFile("bush.bmp");
 	m_coin_texture_ID = TextureFromFile("coin.bmp");
@@ -194,7 +134,6 @@ bool CMyApp::Init()
 	m_fire_texture_ID = TextureFromFile("fire.bmp");
 	m_brown_texture_ID = TextureFromFile("brown.bmp");
 
-	// mesh betoltese
 	m_suzanne = ObjParser::parse("Suzanne.obj");
 	m_suzanne->initBuffers();
 
@@ -311,7 +250,6 @@ void CMyApp::Update()
 		m_matView = glm::lookAt(m_eye, m_at, m_up);
 	}
 	else if (camera){
-		// nézeti transzformáció beállítása
 		float c = cosf(3.14159 / 2 * suzpos.ir);
 		float s = sinf(3.14159 / 2 * suzpos.ir);
 		m_eye = glm::vec3(suzpos.x * 20 - s * 30, 30, suzpos.y * 20 - c * 30);
@@ -342,21 +280,13 @@ void CMyApp::Update()
 
 void CMyApp::DrawGround()
 {
-	// a talaj kirajzolasahoz szukseges shader beallitasa
 	glUseProgram(m_programID);
 	glUniform4fv(m_loc_kd, 1, &glm::vec4(1.0, 1.0, 1.0, 1.0)[0]);
-
-	// shader parameterek beállítása
 	
-	// aktiváljuk a 0-és textúra mintavételezõ egységet
 	glActiveTexture(GL_TEXTURE0);
-	// aktiváljuk a generált textúránkat 
 	glBindTexture(GL_TEXTURE_2D, m_floor_textureID);
-	// textúra mintavételezõ és shader-beli sampler2D összerendelése
-	glUniform1i(	m_loc_texture,	// ezen azonosítójú sampler 2D
-					0);				// olvassa az ezen indexû mintavételezõt
+	glUniform1i(m_loc_texture, 0);
 
-	// kapcsoljuk be a VAO-t (a VBO jön vele együtt)
 	glBindVertexArray(m_vaoID);
 
 	for (int i = 0; i < 50; ++i){
@@ -364,32 +294,16 @@ void CMyApp::DrawGround()
 			m_matWorld = glm::translate<float>(glm::vec3(20.f * i, 0.f, 20.f * j));
 			glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 			glm::mat4 WIT = glm::inverse(m_matWorld);
-			// majd küldjük át a megfelelõ mátrixokat!
-			glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
-				1,			// egy darab mátrixot
-				GL_FALSE,	// NEM transzponálva
-				&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
+			
+			glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
+			glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
+			glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
 
-			glUniformMatrix4fv(m_loc_world,
-				1,
-				GL_FALSE,	// transzponálva
-				&(m_matWorld[0][0]));
-			glUniformMatrix4fv(m_loc_wit,
-				1,
-				GL_TRUE,	// transzponálva
-				&(WIT[0][0]));
-
-			// kirajzolás
-			glDrawElements(GL_TRIANGLES,		// primitív típus
-				6,					// hany csucspontot hasznalunk a kirajzolashoz
-				GL_UNSIGNED_SHORT,	// indexek tipusa
-				0);		// indexek cime
+			glDrawElements(GL_TRIANGLES, 6,	GL_UNSIGNED_SHORT, 0);
 		}
 	}
-	// VAO kikapcsolasa
 	glBindVertexArray(0);
 
-	// textúra kikapcsolása
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glUseProgram( 0 );
@@ -403,22 +317,13 @@ void CMyApp::DrawBushes(){
 			*glm::translate<float>(glm::vec3(0,4,0))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(5.0, 3.0, 5.0));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
-		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
-			1,			// egy darab mátrixot
-			GL_FALSE,	// NEM transzponálva
-			&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
-		glUniformMatrix4fv(m_loc_world,
-			1,
-			GL_FALSE,	// transzponálva
-			&(m_matWorld[0][0]));
-		glUniformMatrix4fv(m_loc_wit,
-			1,
-			GL_TRUE,	// transzponálva
-			&(WIT[0][0]));
+		
+		glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
+		glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
+		glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_bush_texture_ID);
-		glUniform1i(m_loc_texture,	// ezen azonosítójú sampler 2D
-			0);				// olvassa az ezen indexû mintavételezõt
+		glUniform1i(m_loc_texture, 0);
 		m_bush->draw();
 	}
 }
@@ -430,22 +335,13 @@ void CMyApp::DrawCoins(){
 		m_matWorld = glm::translate<float>(glm::vec3(it.x*20, 5, it.y*20))*glm::rotate<float>(2*3.14159*SDL_GetTicks()/1000.0f,glm::vec3(0,1,0))*glm::rotate<float>(M_PI_2,glm::vec3(1,0,0))*glm::scale<float>(glm::vec3(5,5,5));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
-		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
-			1,			// egy darab mátrixot
-			GL_FALSE,	// NEM transzponálva
-			&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
-		glUniformMatrix4fv(m_loc_world,
-			1,
-			GL_FALSE,	// transzponálva
-			&(m_matWorld[0][0]));
-		glUniformMatrix4fv(m_loc_wit,
-			1,
-			GL_TRUE,	// transzponálva
-			&(WIT[0][0]));
+		
+		glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
+		glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
+		glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_coin_texture_ID);
-		glUniform1i(m_loc_texture,	// ezen azonosítójú sampler 2D
-			0);				// olvassa az ezen indexû mintavételezõt
+		glUniform1i(m_loc_texture, 0);
 		m_coin->draw();
 	}
 }
@@ -457,22 +353,13 @@ void CMyApp::DrawDiamonds(){
 		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 1000.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(2, 2, 2));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
-		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
-			1,			// egy darab mátrixot
-			GL_FALSE,	// NEM transzponálva
-			&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
-		glUniformMatrix4fv(m_loc_world,
-			1,
-			GL_FALSE,	// transzponálva
-			&(m_matWorld[0][0]));
-		glUniformMatrix4fv(m_loc_wit,
-			1,
-			GL_TRUE,	// transzponálva
-			&(WIT[0][0]));
+		
+		glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
+		glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
+		glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_diamond_texture_ID);
-		glUniform1i(m_loc_texture,	// ezen azonosítójú sampler 2D
-			0);				// olvassa az ezen indexû mintavételezõt
+		glUniform1i(m_loc_texture, 0);
 		m_diamond->draw();
 	}
 }
@@ -506,28 +393,14 @@ void CMyApp::DrawSuzanne()
 	m_matWorld = glm::translate<float>(glm::vec3(suzpos.x*20, 3, suzpos.y*20))*jump*size*glm::rotate<float>(suzpos.ir*M_PI_2,glm::vec3(0,1,0));
 	glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 	glm::mat4 WIT = glm::inverse(m_matWorld);
-	// majd küldjük át a megfelelõ mátrixokat!
-	glUniformMatrix4fv( m_loc_mvp,// erre a helyre töltsünk át adatot
-						1,			// egy darab mátrixot
-						GL_FALSE,	// NEM transzponálva
-						&(mvp[0][0]) ); // innen olvasva a 16 x sizeof(float)-nyi adatot
-	glUniformMatrix4fv(m_loc_world,
-		1,
-		GL_FALSE,	// transzponálva
-		&(m_matWorld[0][0]));
-	glUniformMatrix4fv(m_loc_wit,
-		1,
-		GL_TRUE,	// transzponálva
-		&(WIT[0][0]));
+	
+	glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
+	glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
+	glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
 
-	// aktiváljuk a 0-és textúra mintavételezõ egységet
 	glActiveTexture(GL_TEXTURE0);
-	// aktiváljuk a generált textúránkat 
 	glBindTexture(GL_TEXTURE_2D, m_brown_texture_ID);
-	// textúra mintavételezõ és shader-beli sampler2D összerendelése
-	glUniform1i(	m_loc_texture,	// ezen azonosítójú sampler 2D
-					0);				// olvassa az ezen indexû mintavételezõt
-
+	glUniform1i(m_loc_texture, 0);
 
 	m_suzanne->draw();
 
@@ -543,29 +416,21 @@ void CMyApp::DrawShots(){
 		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::inverse(m_matWorld);
-		glUniformMatrix4fv(m_loc_mvp,// erre a helyre töltsünk át adatot
-			1,			// egy darab mátrixot
-			GL_FALSE,	// NEM transzponálva
-			&(mvp[0][0])); // innen olvasva a 16 x sizeof(float)-nyi adatot
-		glUniformMatrix4fv(m_loc_world,
-			1,
-			GL_FALSE,	// transzponálva
-			&(m_matWorld[0][0]));
-		glUniformMatrix4fv(m_loc_wit,
-			1,
-			GL_TRUE,	// transzponálva
-			&(WIT[0][0]));
+		
+		glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
+		glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
+		glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
+		
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, m_fire_texture_ID);
-		glUniform1i(m_loc_texture,	// ezen azonosítójú sampler 2D
-			0);				// olvassa az ezen indexû mintavételezõt
+		glUniform1i(m_loc_texture, 0);
+		
 		m_shot->draw();
 	}
 }
 
 void CMyApp::Render()
 {
-	// töröljük a frampuffert (GL_COLOR_BUFFER_BIT) és a mélységi Z puffert (GL_DEPTH_BUFFER_BIT)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	DrawGround();
 	DrawBushes();

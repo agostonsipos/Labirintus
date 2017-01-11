@@ -62,7 +62,6 @@ public:
 	void MouseWheel(SDL_MouseWheelEvent&);
 	void Resize(int, int);
 protected:
-	// belsõ eljárások
 	void DrawGround();
 	void DrawBushes();
 	void DrawCoins();
@@ -75,15 +74,12 @@ protected:
 
 	void CheckMoney();
 
-	// shaderekhez szükséges változók
-	GLuint m_programID; // shaderek programja
+	GLuint m_programID;
 
-	// transzformációs mátrixok
 	glm::mat4 m_matWorld;
 	glm::mat4 m_matView;
 	glm::mat4 m_matProj;
 
-	// mátrixok helye a shaderekben
 	GLuint	m_loc_mvp;
 	GLuint  m_loc_world;
 	GLuint  m_loc_wit;
@@ -94,12 +90,10 @@ protected:
 	GLuint  m_loc_kd;
 	GLuint  m_loc_ks;
 
-
-	// OpenGL-es dolgok
-	GLuint m_vaoID; // vertex array object erõforrás azonosító
-	GLuint m_vboID; // vertex buffer object erõforrás azonosító
-	GLuint m_ibID;  // index buffer object erõforrás azonosító
-	GLuint m_floor_textureID; // fájlból betöltött textúra azonosítója
+	GLuint m_vaoID;
+	GLuint m_vboID;
+	GLuint m_ibID;
+	GLuint m_floor_textureID;
 	GLuint m_bush_texture_ID;
 	GLuint m_coin_texture_ID;
 	GLuint m_diamond_texture_ID;
@@ -113,9 +107,9 @@ protected:
 
 	struct Vertex
 	{
-		glm::vec3 p; // pozíció
-		glm::vec3 c; // szín
-		glm::vec2 t; // textúra koordináták
+		glm::vec3 p;
+		glm::vec3 c;
+		glm::vec2 t;
 	};
 
 
@@ -152,7 +146,6 @@ protected:
 	int money = 0;
 	int diamonds = 0;
 
-	// mesh adatok
 	Mesh *m_suzanne;
 	Mesh *m_bush;
 	Mesh *m_coin;
