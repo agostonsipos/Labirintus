@@ -75,8 +75,8 @@ bool CMyApp::Init()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
-	GLuint vs_ID = loadShader(GL_VERTEX_SHADER,		"shader.vert");
-	GLuint fs_ID = loadShader(GL_FRAGMENT_SHADER,	"shader.frag");
+	GLuint vs_ID = loadShader(GL_VERTEX_SHADER,		"shaders/shader.vert");
+	GLuint fs_ID = loadShader(GL_FRAGMENT_SHADER,	"shaders/shader.frag");
 
 	m_programID = glCreateProgram();
 
@@ -127,26 +127,26 @@ bool CMyApp::Init()
 	m_loc_ks = glGetUniformLocation(m_programID, "ks");
 
 
-	m_floor_textureID = TextureFromFile("floor.bmp");
-	m_bush_texture_ID = TextureFromFile("bush.bmp");
-	m_coin_texture_ID = TextureFromFile("coin.bmp");
-	m_diamond_texture_ID = TextureFromFile("diamond.bmp");
-	m_fire_texture_ID = TextureFromFile("fire.bmp");
-	m_brown_texture_ID = TextureFromFile("brown.bmp");
+	m_floor_textureID = TextureFromFile("textures/floor.bmp");
+	m_bush_texture_ID = TextureFromFile("textures/bush.bmp");
+	m_coin_texture_ID = TextureFromFile("textures/coin.bmp");
+	m_diamond_texture_ID = TextureFromFile("textures/diamond.bmp");
+	m_fire_texture_ID = TextureFromFile("textures/fire.bmp");
+	m_brown_texture_ID = TextureFromFile("textures/brown.bmp");
 
-	m_suzanne = ObjParser::parse("Suzanne.obj");
+	m_suzanne = ObjParser::parse("models/Suzanne.obj");
 	m_suzanne->initBuffers();
 
-	m_bush = ObjParser::parse("bush.obj");
+	m_bush = ObjParser::parse("models/bush.obj");
 	m_bush->initBuffers();
 
-	m_coin = ObjParser::parse("coin.obj");
+	m_coin = ObjParser::parse("models/coin.obj");
 	m_coin->initBuffers();
 
-	m_diamond = ObjParser::parse("diamond.obj");
+	m_diamond = ObjParser::parse("models/diamond.obj");
 	m_diamond->initBuffers();
 
-	m_shot = ObjParser::parse("shot.obj");
+	m_shot = ObjParser::parse("models/shot.obj");
 	m_shot->initBuffers();
 
 	genBushes();
