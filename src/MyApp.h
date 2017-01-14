@@ -63,7 +63,7 @@ public:
 	void Resize(int, int);
 protected:
 	void DrawGround();
-	void DrawBushes();
+	void DrawBushes(bool detailed);
 	void DrawCoins();
 	void DrawDiamonds();
 	void DrawSuzanne();
@@ -75,6 +75,7 @@ protected:
 	void CheckMoney();
 
 	GLuint m_programID;
+	GLuint m_inst_programID;
 
 	glm::mat4 m_matWorld;
 	glm::mat4 m_matView;
@@ -87,8 +88,20 @@ protected:
 	GLuint  m_loc_eye;
 	GLuint  m_loc_sunpos;
 	GLuint  m_loc_moonpos;
+	GLuint  m_loc_ka;
 	GLuint  m_loc_kd;
 	GLuint  m_loc_ks;
+	
+	GLuint	i_loc_vp;
+	GLuint  i_loc_world;
+	GLuint  i_loc_wit;
+	GLuint	i_loc_texture;
+	GLuint  i_loc_eye;
+	GLuint  i_loc_sunpos;
+	GLuint  i_loc_moonpos;
+	GLuint  i_loc_ka;
+	GLuint  i_loc_kd;
+	GLuint  i_loc_ks;
 
 	GLuint m_vaoID;
 	GLuint m_vboID;
@@ -148,6 +161,7 @@ protected:
 
 	Mesh *m_suzanne;
 	Mesh *m_bush;
+	Mesh *m_bush_backup;
 	Mesh *m_coin;
 	Mesh *m_diamond;
 	Mesh *m_shot;

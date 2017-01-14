@@ -20,6 +20,9 @@ public:
 
 	void initBuffers();
 	void draw();
+	void drawInstanced(GLsizei);
+	
+	void addTransformAttribute(int attr, std::vector<glm::mat4>& _matrices);
 
 	void addVertex(const Vertex& vertex) {
 		vertices.push_back(vertex);
@@ -27,6 +30,7 @@ public:
 	void addIndex(unsigned int index) {
 		indices.push_back(index);
 	}
+	glm::vec3 getSampleVertPos(){ return vertices[0].position; }
 private:
 	GLuint vertexArrayObject;
 	GLuint vertexBuffer;

@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 
 #include "MyApp.h"
 
@@ -14,7 +15,7 @@ void exitProgram()
 {
 	SDL_Quit();
 
-	std::cout << "Press any key to exit..." << std::endl;
+	std::cout << "Press Enter to exit..." << std::endl;
 	std::cin.get();
 }
 
@@ -29,7 +30,7 @@ int main( int argc, char* args[] )
 	}
 	
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE,         32);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE,            8);
@@ -57,6 +58,7 @@ int main( int argc, char* args[] )
 
 	SDL_GL_SetSwapInterval(1);
 
+	glewExperimental = GL_TRUE; 
 	GLenum error = glewInit();
 	if ( error != GLEW_OK )
 	{
@@ -95,6 +97,7 @@ int main( int argc, char* args[] )
 		return 1;
 	}
 
+	unsigned t = SDL_GetTicks();
 	while (!quit)
 	{
 		while ( SDL_PollEvent(&ev) )
@@ -137,6 +140,13 @@ int main( int argc, char* args[] )
 		app.Render();
 
 		SDL_GL_SwapWindow(win);
+		
+		unsigned spf = SDL_GetTicks() - t;
+		float fps = 1000.0/spf;
+		std::stringstream window_title;
+		window_title << std::setprecision(2) << "OpenGL " << glVersion[0] << "." << glVersion[1] << " " << fps << " FPS";
+		SDL_SetWindowTitle(win, window_title.str().c_str());
+		t = SDL_GetTicks();
 	}
 
 

@@ -75,40 +75,9 @@ bool CMyApp::Init()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
-	GLuint vs_ID = loadShader(GL_VERTEX_SHADER,		"shaders/shader.vert");
-	GLuint fs_ID = loadShader(GL_FRAGMENT_SHADER,	"shaders/shader.frag");
-
-	m_programID = glCreateProgram();
-
-	glAttachShader(m_programID, vs_ID);
-	glAttachShader(m_programID, fs_ID);
-
-	glBindAttribLocation( m_programID, 0, "vs_in_pos");
-	glBindAttribLocation( m_programID, 1, "vs_in_normal");
-	glBindAttribLocation( m_programID, 2, "vs_in_tex0");
-
-	glLinkProgram(m_programID);
-
-	GLint infoLogLength = 0, result = 0;
-
-	glGetProgramiv(m_programID, GL_LINK_STATUS, &result);
-	glGetProgramiv(m_programID, GL_INFO_LOG_LENGTH, &infoLogLength);
-	if ( GL_FALSE == result )
-	{
-		std::vector<char> ProgramErrorMessage( infoLogLength );
-		glGetProgramInfoLog(m_programID, infoLogLength, NULL, &ProgramErrorMessage[0]);
-		fprintf(stdout, "%s\n", &ProgramErrorMessage[0]);
-		
-		char* aSzoveg = new char[ProgramErrorMessage.size()];
-		memcpy( aSzoveg, &ProgramErrorMessage[0], ProgramErrorMessage.size());
-
-		std::cout << "[app.Init()] Shader error: " << aSzoveg << std::endl;
-
-		delete aSzoveg;
-	}
-
-	glDeleteShader( vs_ID );
-	glDeleteShader( fs_ID );
+	m_programID = createShaderProgram("shaders/shader.vert", "shaders/shader.frag");
+	
+	m_inst_programID = createShaderProgram("shaders/instanced.vert", "shaders/shader.frag");
 
 	m_matProj = glm::perspective( 45.0f, 640/480.0f, 1.0f, 10000.0f );
 
@@ -123,8 +92,24 @@ bool CMyApp::Init()
 
 	m_loc_eye = glGetUniformLocation(m_programID, "eye");
 
+	m_loc_ka = glGetUniformLocation(m_programID, "ka");
 	m_loc_kd = glGetUniformLocation(m_programID, "kd");
 	m_loc_ks = glGetUniformLocation(m_programID, "ks");
+
+	i_loc_vp = glGetUniformLocation( m_inst_programID, "VP");
+	i_loc_world = glGetUniformLocation(m_inst_programID, "world");
+	i_loc_wit = glGetUniformLocation(m_inst_programID, "WorldIT");
+
+	i_loc_texture = glGetUniformLocation( m_inst_programID, "texture" );
+
+	i_loc_sunpos = glGetUniformLocation(m_inst_programID, "Sp");
+	i_loc_moonpos = glGetUniformLocation(m_inst_programID, "Mp");
+
+	i_loc_eye = glGetUniformLocation(m_inst_programID, "eye");
+
+	i_loc_ka = glGetUniformLocation(m_inst_programID, "ka");
+	i_loc_kd = glGetUniformLocation(m_inst_programID, "kd");
+	i_loc_ks = glGetUniformLocation(m_inst_programID, "ks");
 
 
 	m_floor_textureID = TextureFromFile("textures/floor.bmp");
@@ -137,8 +122,10 @@ bool CMyApp::Init()
 	m_suzanne = ObjParser::parse("models/Suzanne.obj");
 	m_suzanne->initBuffers();
 
-	m_bush = ObjParser::parse("models/bush.obj");
+	m_bush = ObjParser::parse("models/hedge.obj");
 	m_bush->initBuffers();
+	m_bush_backup = ObjParser::parse("models/bush.obj");
+	m_bush_backup->initBuffers();
 
 	m_coin = ObjParser::parse("models/coin.obj");
 	m_coin->initBuffers();
@@ -261,7 +248,7 @@ void CMyApp::Update()
 		float c = cosf(3.14159 / 2 * suzpos.ir);
 		float s = sinf(3.14159 / 2 * suzpos.ir);
 		m_up = glm::vec3(s, 0, c);
-		m_matView = glm::lookAt(glm::vec3(suzpos.x * 20, 500, suzpos.y * 20-1), glm::vec3(suzpos.x * 20, 0, suzpos.y * 20), glm::vec3(0, 1, 0));
+		m_matView = glm::lookAt(glm::vec3(suzpos.x * 20, 200, suzpos.y * 20-1), glm::vec3(suzpos.x * 20, 0, suzpos.y * 20), glm::vec3(0, 1, 0));
 	}
 
 	sunpos = glm::vec3(1000.0f*sinf(SDL_GetTicks() / 20000.0f), 1000.0f*cosf(SDL_GetTicks() / 20000.0f), 0.0f);
@@ -309,28 +296,53 @@ void CMyApp::DrawGround()
 	glUseProgram( 0 );
 }
 
-void CMyApp::DrawBushes(){
+void CMyApp::DrawBushes(bool detailed){
+	std::vector<glm::mat4> world_range;
+	std::vector<glm::mat4> worldIT_range;
 	for (auto it : m_list_bushes){
-		glUseProgram(m_programID);
-		glUniform4fv(m_loc_kd, 1, &glm::vec4(0.0, 0.8, 0.0, 1.0)[0]);
-		m_matWorld = glm::translate<float>(glm::vec3(it.ir?-10:0,0,it.ir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.ir?M_PI_2:0,glm::vec3(0,1,0))
-			*glm::translate<float>(glm::vec3(0,4,0))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(5.0, 3.0, 5.0));
-		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
-		glm::mat4 WIT = glm::inverse(m_matWorld);
+		if(detailed)
+			m_matWorld = glm::translate<float>(glm::vec3(it.ir?-10:0,0,it.ir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.ir?M_PI_2:0,glm::vec3(0,1,0))
+				*glm::translate<float>(glm::vec3(0,4,0))*glm::scale<float>(glm::vec3(30, 50, 20))*glm::translate<float>(glm::vec3(0,-0.1,0));
+		else
+			m_matWorld = glm::translate<float>(glm::vec3(it.ir?-10:0,0,it.ir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.ir?M_PI_2:0,glm::vec3(0,1,0))
+				*glm::translate<float>(glm::vec3(0,4,0))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(5.0, 3.0, 5.0));
+		world_range.push_back(m_matWorld);
+		worldIT_range.push_back(glm::transpose(glm::inverse(m_matWorld)));
 		
-		glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
-		glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
-		glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_bush_texture_ID);
-		glUniform1i(m_loc_texture, 0);
-		m_bush->draw();
+		if(detailed)
+		{
+			glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
+			glm::vec4 v = mvp*glm::vec4(m_bush->getSampleVertPos(),1); v /= v.w;
+			// Early clipping (totally heuristic)
+			if(v.x > 1.6 || v.y > 1.3 || v.z > 1.6 || v.x < -1.6 || v.y < -2.5 || v.z < -4) { world_range.pop_back(); worldIT_range.pop_back(); }
+		}
 	}
+	glUseProgram(m_inst_programID);
+	glm::mat4 vp = m_matProj * m_matView;
+	glUniform4fv(i_loc_ka, 1, &glm::vec4(0.0, 0.8, 0.0, 1.0)[0]);
+	glUniform4fv(i_loc_kd, 1, &glm::vec4(0.0, 0.8, 0.0, 1.0)[0]);
+	glUniformMatrix4fv(i_loc_vp, 1, GL_FALSE, (float*)&(vp[0]));
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_bush_texture_ID);
+	glUniform1i(i_loc_texture, 0);
+	if(detailed)
+	{
+		m_bush->addTransformAttribute(3, world_range);
+		m_bush->addTransformAttribute(7, worldIT_range);
+		m_bush->drawInstanced(world_range.size());
+	}
+	else
+	{
+		m_bush_backup->addTransformAttribute(3, world_range);
+		m_bush_backup->addTransformAttribute(7, worldIT_range);
+		m_bush_backup->drawInstanced(world_range.size());
+	}
+	glUseProgram(0);
 }
 
 void CMyApp::DrawCoins(){
+	glUseProgram(m_programID);
 	for (auto it : m_list_coins){
-		glUseProgram(m_programID);
 		glUniform4fv(m_loc_kd, 1, &glm::vec4(1.0, 1.0, 0.0, 1.0)[0]);
 		m_matWorld = glm::translate<float>(glm::vec3(it.x*20, 5, it.y*20))*glm::rotate<float>(2*3.14159*SDL_GetTicks()/1000.0f,glm::vec3(0,1,0))*glm::rotate<float>(M_PI_2,glm::vec3(1,0,0))*glm::scale<float>(glm::vec3(5,5,5));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
@@ -347,8 +359,8 @@ void CMyApp::DrawCoins(){
 }
 
 void CMyApp::DrawDiamonds(){
+	glUseProgram(m_programID);
 	for (auto it : m_list_diamonds){
-		glUseProgram(m_programID);
 		glUniform4fv(m_loc_kd, 1, &glm::vec4(2.0, 2.0, 3.0, 1.0)[0]);
 		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 1000.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(2, 2, 2));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
@@ -362,11 +374,11 @@ void CMyApp::DrawDiamonds(){
 		glUniform1i(m_loc_texture, 0);
 		m_diamond->draw();
 	}
+	glUseProgram(0);
 }
 
 void CMyApp::DrawSuzanne()
 {
-	// a mesh kirajzolasahoz hasznalt shader bekapcsolasa
 	glUseProgram(m_programID);
 	if (mega)
 		glUniform4fv(m_loc_ks, 1, &glm::vec4(2.0, 0.0, 0.0, 1.0)[0]);
@@ -410,8 +422,8 @@ void CMyApp::DrawSuzanne()
 }
 
 void CMyApp::DrawShots(){
+	glUseProgram(m_programID);
 	for (auto it : m_list_shots){
-		glUseProgram(m_programID);
 		glUniform4fv(m_loc_kd, 1, &glm::vec4(2.0, 2.0, 3.0, 1.0)[0]);
 		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
@@ -427,13 +439,14 @@ void CMyApp::DrawShots(){
 		
 		m_shot->draw();
 	}
+	glUseProgram(0);
 }
 
 void CMyApp::Render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	DrawGround();
-	DrawBushes();
+	DrawBushes(camera && !win && !lose);
 	DrawCoins();
 	DrawDiamonds();
 	DrawSuzanne();

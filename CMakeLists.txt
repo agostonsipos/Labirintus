@@ -12,7 +12,7 @@ src/GLUtils.hpp
 )
 
 set(tarver "x86")
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++11 -O2")
 
 if(UNIX)
 	set(libdir "/usr/lib/")

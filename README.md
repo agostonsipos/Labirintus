@@ -1,7 +1,7 @@
 This is a 3D labirinth game, originally created as an undergraduate school project.
 
 The program is standard C++ (CXX11) and depends on the following:
- - OpenGL (>=3.1)
+ - OpenGL (>=3.3)
  - GLEW, GLU
  - GLM (>=0.9.7)
  - SDL2 (>=2.0) with SDL2_image

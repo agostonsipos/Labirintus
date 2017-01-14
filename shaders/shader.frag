@@ -1,4 +1,6 @@
-#version 130
+#version 330
+
+layout(early_fragment_tests) in;
 
 in vec3 vs_out_pos;
 in vec3 vs_out_normal;
