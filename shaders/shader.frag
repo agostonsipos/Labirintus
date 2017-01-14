@@ -8,7 +8,6 @@ in vec2 vs_out_tex0;
 out vec4 fs_out_col;
 
 uniform sampler2D texture;
-uniform sampler2D texture2;
 
 uniform vec3 eye;
 

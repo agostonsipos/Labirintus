@@ -18,6 +18,7 @@
 
 // mesh
 #include "ObjParser_OGL3.h"
+#include "gShaderProgram.h"
 
 struct Suzanne{
 	float x;
@@ -74,6 +75,8 @@ protected:
 
 	void CheckMoney();
 
+	gShaderProgram m_program;
+	gShaderProgram m_inst_program;
 	GLuint m_programID;
 	GLuint m_inst_programID;
 
@@ -81,7 +84,7 @@ protected:
 	glm::mat4 m_matView;
 	glm::mat4 m_matProj;
 
-	GLuint	m_loc_mvp;
+	/*GLuint	m_loc_mvp;
 	GLuint  m_loc_world;
 	GLuint  m_loc_wit;
 	GLuint	m_loc_texture;
@@ -101,11 +104,12 @@ protected:
 	GLuint  i_loc_moonpos;
 	GLuint  i_loc_ka;
 	GLuint  i_loc_kd;
-	GLuint  i_loc_ks;
+	GLuint  i_loc_ks;*/
 
 	GLuint m_vaoID;
 	GLuint m_vboID;
 	GLuint m_ibID;
+	
 	GLuint m_floor_textureID;
 	GLuint m_bush_texture_ID;
 	GLuint m_coin_texture_ID;

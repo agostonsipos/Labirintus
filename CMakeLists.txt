@@ -2,13 +2,15 @@ cmake_minimum_required(VERSION 3.5)
 
 add_executable(Labirintus
 src/main.cpp
-src/Mesh_OGL3.cpp
+src/MyApp.h
 src/MyApp.cpp
+src/ObjParser_OGL3.h
 src/ObjParser_OGL3.cpp
 src/Mesh_OGL3.h
-src/MyApp.h
-src/ObjParser_OGL3.h
+src/Mesh_OGL3.cpp
 src/GLUtils.hpp
+src/gShaderProgram.h
+src/gShaderProgram.cpp
 )
 
 set(tarver "x86")

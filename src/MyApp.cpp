@@ -75,13 +75,13 @@ bool CMyApp::Init()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
-	m_programID = createShaderProgram("shaders/shader.vert", "shaders/shader.frag");
+	m_program = createShaderProgram("shaders/shader.vert", "shaders/shader.frag");
 	
-	m_inst_programID = createShaderProgram("shaders/instanced.vert", "shaders/shader.frag");
+	m_inst_program = createShaderProgram("shaders/instanced.vert", "shaders/shader.frag");
 
 	m_matProj = glm::perspective( 45.0f, 640/480.0f, 1.0f, 10000.0f );
 
-	m_loc_mvp = glGetUniformLocation( m_programID, "MVP");
+	/*m_loc_mvp = glGetUniformLocation( m_programID, "MVP");
 	m_loc_world = glGetUniformLocation(m_programID, "world");
 	m_loc_wit = glGetUniformLocation(m_programID, "WorldIT");
 
@@ -109,7 +109,7 @@ bool CMyApp::Init()
 
 	i_loc_ka = glGetUniformLocation(m_inst_programID, "ka");
 	i_loc_kd = glGetUniformLocation(m_inst_programID, "kd");
-	i_loc_ks = glGetUniformLocation(m_inst_programID, "ks");
+	i_loc_ks = glGetUniformLocation(m_inst_programID, "ks");*/
 
 
 	m_floor_textureID = TextureFromFile("textures/floor.bmp");
@@ -156,7 +156,8 @@ void CMyApp::Clean()
 	glDeleteBuffers(1, &m_vboID);
 	glDeleteVertexArrays(1, &m_vaoID);
 
-	glDeleteProgram( m_programID );
+	m_program.Clean();
+	m_inst_program.Clean();
 }
 
 void CMyApp::Update()
@@ -256,23 +257,21 @@ void CMyApp::Update()
 
 	if (SDL_GetTicks() - tm > 10000) mega = false;
 
-	glUseProgram(m_programID);
-	glUniform3fv(m_loc_sunpos, 1, &sunpos[0]);
-	glUniform3fv(m_loc_moonpos, 1, &moonpos[0]);
-	glUniform3fv(m_loc_eye, 1, &m_eye[0]);
-	glUseProgram(0);
+	m_program.On();
+	m_program.SetUniform("Sp", sunpos);
+	m_program.SetUniform("Mp", moonpos);
+	m_program.SetUniform("eye", m_eye);
+	m_program.Off();
 
 }
 
 
 void CMyApp::DrawGround()
 {
-	glUseProgram(m_programID);
-	glUniform4fv(m_loc_kd, 1, &glm::vec4(1.0, 1.0, 1.0, 1.0)[0]);
+	m_program.On();
+	m_program.SetUniform("kd", glm::vec4(1.0, 1.0, 1.0, 1.0));
 	
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_floor_textureID);
-	glUniform1i(m_loc_texture, 0);
+	m_program.SetTexture("texture", 0, m_floor_textureID);
 
 	glBindVertexArray(m_vaoID);
 
@@ -280,20 +279,20 @@ void CMyApp::DrawGround()
 		for (int j = 0; j < 50; ++j){
 			m_matWorld = glm::translate<float>(glm::vec3(20.f * i, 0.f, 20.f * j));
 			glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
-			glm::mat4 WIT = glm::inverse(m_matWorld);
+			glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
 			
-			glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
-			glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
-			glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
+			m_program.SetUniform("MVP", mvp);
+			m_program.SetUniform("world", m_matWorld);
+			m_program.SetUniform("WorldIT", WIT);
 
 			glDrawElements(GL_TRIANGLES, 6,	GL_UNSIGNED_SHORT, 0);
 		}
 	}
 	glBindVertexArray(0);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	m_program.SetTexture("texture", 0, 0);
 
-	glUseProgram( 0 );
+	m_program.Off();
 }
 
 void CMyApp::DrawBushes(bool detailed){
@@ -317,14 +316,12 @@ void CMyApp::DrawBushes(bool detailed){
 			if(v.x > 1.6 || v.y > 1.3 || v.z > 1.6 || v.x < -1.6 || v.y < -2.5 || v.z < -4) { world_range.pop_back(); worldIT_range.pop_back(); }
 		}
 	}
-	glUseProgram(m_inst_programID);
+	m_inst_program.On();
 	glm::mat4 vp = m_matProj * m_matView;
-	glUniform4fv(i_loc_ka, 1, &glm::vec4(0.0, 0.8, 0.0, 1.0)[0]);
-	glUniform4fv(i_loc_kd, 1, &glm::vec4(0.0, 0.8, 0.0, 1.0)[0]);
-	glUniformMatrix4fv(i_loc_vp, 1, GL_FALSE, (float*)&(vp[0]));
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_bush_texture_ID);
-	glUniform1i(i_loc_texture, 0);
+	m_inst_program.SetUniform("ka", glm::vec4(0.0, 0.8, 0.0, 1.0));
+	m_inst_program.SetUniform("kd", glm::vec4(0.0, 0.8, 0.0, 1.0));
+	m_inst_program.SetUniform("VP", vp);
+	m_inst_program.SetTexture("texture", 0, m_bush_texture_ID);
 	if(detailed)
 	{
 		m_bush->addTransformAttribute(3, world_range);
@@ -337,53 +334,54 @@ void CMyApp::DrawBushes(bool detailed){
 		m_bush_backup->addTransformAttribute(7, worldIT_range);
 		m_bush_backup->drawInstanced(world_range.size());
 	}
-	glUseProgram(0);
+	m_inst_program.SetUniform("ka", glm::vec4(0.1, 0.1, 0.1, 1.0));
+	m_program.SetTexture("texture", 0, 0);
+	m_inst_program.Off();
 }
 
 void CMyApp::DrawCoins(){
-	glUseProgram(m_programID);
+	m_program.On();
+	m_program.SetUniform("kd", glm::vec4(1.0, 1.0, 0.0, 1.0));
 	for (auto it : m_list_coins){
-		glUniform4fv(m_loc_kd, 1, &glm::vec4(1.0, 1.0, 0.0, 1.0)[0]);
-		m_matWorld = glm::translate<float>(glm::vec3(it.x*20, 5, it.y*20))*glm::rotate<float>(2*3.14159*SDL_GetTicks()/1000.0f,glm::vec3(0,1,0))*glm::rotate<float>(M_PI_2,glm::vec3(1,0,0))*glm::scale<float>(glm::vec3(5,5,5));
+		m_matWorld = glm::translate<float>(glm::vec3(it.x*20, 5, it.y*20))*glm::rotate<float>(2*3.14159*SDL_GetTicks()/2000.0f,glm::vec3(0,1,0))*glm::rotate<float>(M_PI_2,glm::vec3(1,0,0))*glm::scale<float>(glm::vec3(8,8,8));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
-		glm::mat4 WIT = glm::inverse(m_matWorld);
+		glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
 		
-		glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
-		glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
-		glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_coin_texture_ID);
-		glUniform1i(m_loc_texture, 0);
+		m_program.SetUniform("MVP", mvp);
+		m_program.SetUniform("world", m_matWorld);
+		m_program.SetUniform("WorldIT", WIT);
+		m_program.SetTexture("texture", 0, m_coin_texture_ID);
 		m_coin->draw();
 	}
+	m_program.SetTexture("texture", 0, 0);
+	m_program.Off();
 }
 
 void CMyApp::DrawDiamonds(){
-	glUseProgram(m_programID);
+	m_program.On();
+	m_program.SetUniform("kd", glm::vec4(2.0, 2.0, 3.0, 1.0));
 	for (auto it : m_list_diamonds){
-		glUniform4fv(m_loc_kd, 1, &glm::vec4(2.0, 2.0, 3.0, 1.0)[0]);
-		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 1000.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(2, 2, 2));
+		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 2000.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(2, 2, 2));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
-		glm::mat4 WIT = glm::inverse(m_matWorld);
+		glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
 		
-		glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
-		glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
-		glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_diamond_texture_ID);
-		glUniform1i(m_loc_texture, 0);
+		m_program.SetUniform("MVP", mvp);
+		m_program.SetUniform("world", m_matWorld);
+		m_program.SetUniform("WorldIT", WIT);
+		m_program.SetTexture("texture", 0, m_diamond_texture_ID);
 		m_diamond->draw();
 	}
-	glUseProgram(0);
+	m_program.SetTexture("texture", 0, 0);
+	m_program.Off();
 }
 
 void CMyApp::DrawSuzanne()
 {
-	glUseProgram(m_programID);
+	m_program.On();
 	if (mega)
-		glUniform4fv(m_loc_ks, 1, &glm::vec4(2.0, 0.0, 0.0, 1.0)[0]);
+		m_program.SetUniform("ks", glm::vec4(2.0, 0.0, 0.0, 1.0));
 
-	glUniform4fv(m_loc_kd, 1, &glm::vec4(1.0, 1.0, 1.0, 1.0)[0]);
+	m_program.SetUniform("kd", glm::vec4(1.0, 1.0, 1.0, 1.0));
 
 	glm::mat4 jump;
 	if (moving[0] || moving[1] || moving[2] || moving[3]){
@@ -404,42 +402,39 @@ void CMyApp::DrawSuzanne()
 
 	m_matWorld = glm::translate<float>(glm::vec3(suzpos.x*20, 3, suzpos.y*20))*jump*size*glm::rotate<float>(suzpos.ir*M_PI_2,glm::vec3(0,1,0));
 	glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
-	glm::mat4 WIT = glm::inverse(m_matWorld);
+	glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
 	
-	glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
-	glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
-	glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_brown_texture_ID);
-	glUniform1i(m_loc_texture, 0);
+	m_program.SetUniform("MVP", mvp);
+	m_program.SetUniform("world", m_matWorld);
+	m_program.SetUniform("WorldIT", WIT);
+	m_program.SetTexture("texture", 0, m_brown_texture_ID);
 
 	m_suzanne->draw();
 
-	glUniform4fv(m_loc_ks, 1, &glm::vec4(1.0, 1.0, 1.0, 1.0)[0]);
+	m_program.SetUniform("ks", glm::vec4(1.0, 1.0, 1.0, 1.0));
 
-	glUseProgram( 0 );
+	m_program.SetTexture("texture", 0, 0);
+	m_program.Off();
 }
 
 void CMyApp::DrawShots(){
-	glUseProgram(m_programID);
+	m_program.On();
 	for (auto it : m_list_shots){
-		glUniform4fv(m_loc_kd, 1, &glm::vec4(2.0, 2.0, 3.0, 1.0)[0]);
+		m_program.SetUniform("kd", glm::vec4(2.0, 2.0, 3.0, 1.0));
 		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
-		glm::mat4 WIT = glm::inverse(m_matWorld);
+		glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
 		
-		glUniformMatrix4fv(m_loc_mvp, 1, GL_FALSE, &(mvp[0][0]));
-		glUniformMatrix4fv(m_loc_world,	1, GL_FALSE, &(m_matWorld[0][0]));
-		glUniformMatrix4fv(m_loc_wit, 1, GL_TRUE, &(WIT[0][0]));
+		m_program.SetUniform("MVP", mvp);
+		m_program.SetUniform("world", m_matWorld);
+		m_program.SetUniform("WorldIT", WIT);
+		m_program.SetTexture("texture", 0, m_fire_texture_ID);
 		
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_fire_texture_ID);
-		glUniform1i(m_loc_texture, 0);
 		
 		m_shot->draw();
 	}
-	glUseProgram(0);
+	m_program.SetTexture("texture", 0, 0);
+	m_program.Off();
 }
 
 void CMyApp::Render()
