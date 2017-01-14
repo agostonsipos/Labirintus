@@ -46,7 +46,6 @@ bool gShaderProgram::LinkProgram()
 
 	glLinkProgram(m_id_program);
 
-	// linkeles ellenorzese
 	GLint infoLogLength = 0, result = 0;
 
 	glGetProgramiv(m_id_program, GL_LINK_STATUS, &result);
@@ -65,10 +64,8 @@ bool gShaderProgram::LinkProgram()
 	return true;
 }
 
-// töröljük a shader programot, elõtte detach-oljuk a shadereket
 void gShaderProgram::Clean()
 {
-	// töröljük a már linkelt linkelt shadereket
 	for (	std::list<GLuint>::iterator _it = m_list_shaders_attached.begin();
 			_it != m_list_shaders_attached.end();
 			++_it )
@@ -88,10 +85,8 @@ void gShaderProgram::SetVerbose( bool _val )
 
 GLuint gShaderProgram::loadShader(GLenum _shaderType, const char* _fileName)
 {
-	// shader azonosito letrehozasa
 	GLuint loadedShader = glCreateShader( _shaderType );
 
-	// ha nem sikerult hibauzenet es -1 visszaadasa
 	if ( loadedShader == 0 )
 	{
 		if (m_verbose)
@@ -99,10 +94,8 @@ GLuint gShaderProgram::loadShader(GLenum _shaderType, const char* _fileName)
 		return 0;
 	}
 	
-	// shaderkod betoltese _fileName fajlbol
 	std::string shaderCode = "";
 
-	// _fileName megnyitasa
 	std::ifstream shaderStream(_fileName);
 
 	if ( !shaderStream.is_open() )
@@ -112,7 +105,6 @@ GLuint gShaderProgram::loadShader(GLenum _shaderType, const char* _fileName)
 		return 0;
 	}
 
-	// file tartalmanak betoltese a shaderCode string-be
 	std::string line = "";
 	while ( std::getline(shaderStream, line) )
 	{
@@ -121,18 +113,14 @@ GLuint gShaderProgram::loadShader(GLenum _shaderType, const char* _fileName)
 
 	shaderStream.close();
 
-	// fajlbol betoltott kod hozzarendelese a shader-hez
 	const char* sourcePointer = shaderCode.c_str();
 	glShaderSource( loadedShader, 1, &sourcePointer, NULL );
 
-	// shader leforditasa
 	glCompileShader( loadedShader );
 
-	// ellenorizzuk, h minden rendben van-e
 	GLint result = GL_FALSE;
     int infoLogLength;
 
-	// forditas statuszanak lekerdezese
 	glGetShaderiv(loadedShader, GL_COMPILE_STATUS, &result);
 	glGetShaderiv(loadedShader, GL_INFO_LOG_LENGTH, &infoLogLength);
 
@@ -140,12 +128,10 @@ GLuint gShaderProgram::loadShader(GLenum _shaderType, const char* _fileName)
 	{
 		if (m_verbose)
 		{
-			// hibauzenet elkerese es kiirasa
 			std::vector<char> VertexShaderErrorMessage(infoLogLength);
 			glGetShaderInfoLog(loadedShader, infoLogLength, NULL, &VertexShaderErrorMessage[0]);
 
-			std::cout << "Hiba: " << &VertexShaderErrorMessage[0] << std::endl;
-			//fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
+			std::cout << "Error: " << &VertexShaderErrorMessage[0] << std::endl;
 		}
 		loadedShader = 0;
 	}

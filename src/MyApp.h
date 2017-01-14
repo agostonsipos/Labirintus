@@ -84,28 +84,6 @@ protected:
 	glm::mat4 m_matView;
 	glm::mat4 m_matProj;
 
-	/*GLuint	m_loc_mvp;
-	GLuint  m_loc_world;
-	GLuint  m_loc_wit;
-	GLuint	m_loc_texture;
-	GLuint  m_loc_eye;
-	GLuint  m_loc_sunpos;
-	GLuint  m_loc_moonpos;
-	GLuint  m_loc_ka;
-	GLuint  m_loc_kd;
-	GLuint  m_loc_ks;
-	
-	GLuint	i_loc_vp;
-	GLuint  i_loc_world;
-	GLuint  i_loc_wit;
-	GLuint	i_loc_texture;
-	GLuint  i_loc_eye;
-	GLuint  i_loc_sunpos;
-	GLuint  i_loc_moonpos;
-	GLuint  i_loc_ka;
-	GLuint  i_loc_kd;
-	GLuint  i_loc_ks;*/
-
 	GLuint m_vaoID;
 	GLuint m_vboID;
 	GLuint m_ibID;

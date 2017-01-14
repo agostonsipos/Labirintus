@@ -81,37 +81,6 @@ bool CMyApp::Init()
 
 	m_matProj = glm::perspective( 45.0f, 640/480.0f, 1.0f, 10000.0f );
 
-	/*m_loc_mvp = glGetUniformLocation( m_programID, "MVP");
-	m_loc_world = glGetUniformLocation(m_programID, "world");
-	m_loc_wit = glGetUniformLocation(m_programID, "WorldIT");
-
-	m_loc_texture = glGetUniformLocation( m_programID, "texture" );
-
-	m_loc_sunpos = glGetUniformLocation(m_programID, "Sp");
-	m_loc_moonpos = glGetUniformLocation(m_programID, "Mp");
-
-	m_loc_eye = glGetUniformLocation(m_programID, "eye");
-
-	m_loc_ka = glGetUniformLocation(m_programID, "ka");
-	m_loc_kd = glGetUniformLocation(m_programID, "kd");
-	m_loc_ks = glGetUniformLocation(m_programID, "ks");
-
-	i_loc_vp = glGetUniformLocation( m_inst_programID, "VP");
-	i_loc_world = glGetUniformLocation(m_inst_programID, "world");
-	i_loc_wit = glGetUniformLocation(m_inst_programID, "WorldIT");
-
-	i_loc_texture = glGetUniformLocation( m_inst_programID, "texture" );
-
-	i_loc_sunpos = glGetUniformLocation(m_inst_programID, "Sp");
-	i_loc_moonpos = glGetUniformLocation(m_inst_programID, "Mp");
-
-	i_loc_eye = glGetUniformLocation(m_inst_programID, "eye");
-
-	i_loc_ka = glGetUniformLocation(m_inst_programID, "ka");
-	i_loc_kd = glGetUniformLocation(m_inst_programID, "kd");
-	i_loc_ks = glGetUniformLocation(m_inst_programID, "ks");*/
-
-
 	m_floor_textureID = TextureFromFile("textures/floor.bmp");
 	m_bush_texture_ID = TextureFromFile("textures/bush.bmp");
 	m_coin_texture_ID = TextureFromFile("textures/coin.bmp");
