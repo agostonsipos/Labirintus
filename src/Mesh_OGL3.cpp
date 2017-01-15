@@ -6,6 +6,13 @@ Mesh::Mesh(void)
 
 Mesh::~Mesh(void)
 {
+	if (inited)
+	{
+		glDeleteVertexArrays(1, &vertexArrayObject);
+
+		glDeleteBuffers(1, &vertexBuffer);
+		glDeleteBuffers(1, &indexBuffer);
+	}
 }
 
 void Mesh::initBuffers()
@@ -30,6 +37,8 @@ void Mesh::initBuffers()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices.size(), (void*)&indices[0], GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
+
+	inited = true;
 }
 
 void Mesh::draw()
