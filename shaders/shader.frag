@@ -62,6 +62,5 @@ void main()
 	}
 
 
-
 	fs_out_col = (ambient+diffuse+specular)*texture2D(texture, vs_out_tex0.st);
 }

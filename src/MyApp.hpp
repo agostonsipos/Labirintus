@@ -49,6 +49,7 @@ protected:
 	void DrawDiamonds();
 	void DrawSuzanne();
 	void DrawShots();
+	void DrawPoints();
 
 	// Internal checks
 	void CheckCoinDiamond();
@@ -79,6 +80,7 @@ protected:
 	GLuint m_diamond_texture_ID;
 	GLuint m_brown_texture_ID;
 	GLuint m_fire_texture_ID;
+	GLuint m_points_texture_ID;
 
 	// Transformation matrices
 	glm::mat4 m_matWorld;

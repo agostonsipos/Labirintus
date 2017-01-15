@@ -84,6 +84,7 @@ bool CMyApp::Init()
 	m_diamond_texture_ID = TextureFromFile("textures/diamond.bmp");
 	m_fire_texture_ID = TextureFromFile("textures/fire.bmp");
 	m_brown_texture_ID = TextureFromFile("textures/brown.bmp");
+	m_points_texture_ID = PointtableFromFile("textures/pointtable.png", 0, 0);
 
 	m_suzanne = ObjParser::parse("models/Suzanne.obj");
 	m_suzanne->initBuffers();
@@ -407,6 +408,39 @@ void CMyApp::DrawShots(){
 	m_program.Off();
 }
 
+void CMyApp::DrawPoints()
+{
+	m_program.On();
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	
+	m_program.SetUniform("ka", glm::vec4(1.0, 1.0, 1.0, 1.0));
+	m_program.SetUniform("kd", glm::vec4(0.0, 0.0, 0.0, 1.0));
+	// Hack: to have constant color (without regard to lights)
+	m_program.SetUniform("Sp", glm::vec3(0,1,0));
+	m_program.SetUniform("Mp", glm::vec3(0,-1,0));
+	m_program.SetTexture("texture", 0, m_points_texture_ID);
+
+	glBindVertexArray(m_vaoID);
+
+	m_matWorld = glm::translate<float>(glm::vec3(-0.74, 0.74, 0))*glm::scale<float>(glm::vec3(0.025,0.025,0.025))*glm::rotate<float>(M_PI_2, glm::vec3(1,0,0));
+	glm::mat4 mvp = m_matWorld;
+	glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
+	
+	m_program.SetUniform("MVP", mvp);
+	m_program.SetUniform("world", m_matWorld);
+	m_program.SetUniform("WorldIT", WIT);
+
+	glDrawElements(GL_TRIANGLES, 6,	GL_UNSIGNED_SHORT, 0);
+	
+	m_program.SetUniform("ka", glm::vec4(0.1, 0.1, 0.1, 1.0));
+	m_program.SetUniform("Sp", sunpos);
+	m_program.SetUniform("Mp", moonpos);
+	glBindVertexArray(0);
+	glDisable(GL_BLEND);
+	m_program.Off();
+}
+
 void CMyApp::Render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -416,6 +450,7 @@ void CMyApp::Render()
 	DrawDiamonds();
 	DrawSuzanne();
 	DrawShots();
+	DrawPoints();
 }
 
 void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
@@ -459,6 +494,7 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 				tm = SDL_GetTicks();
 				money -= 10;
 				std::cout << "Money: " << money << std::endl;
+				m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
 			}
 			break;
 		case SDLK_k:
@@ -474,6 +510,7 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 		case SDLK_F11:
 			++money;
 			std::cout << "Money: " << money << std::endl;
+			m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
 			break;
 		case SDLK_F12:
 			win = true;
@@ -573,12 +610,14 @@ void CMyApp::CheckCoinDiamond(){
 		++money;
 		std::cout << "Money: " << money << std::endl;
 		m_list_coins.erase(it);
+		m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
 	}
 	auto id = m_list_diamonds.find(Diamond(position));
 	if (id != m_list_diamonds.end()){
 		++diamonds;
 		std::cout << "Diamonds: " << diamonds << std::endl;
 		m_list_diamonds.erase(id);
+		m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
 	}
 	if (diamonds == 10){
 		win = true;

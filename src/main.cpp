@@ -4,6 +4,7 @@
 // SDL
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <SDL_ttf.h>
 
 #include <iostream>
 #include <sstream>
@@ -26,6 +27,11 @@ int main( int argc, char* args[] )
 	if ( SDL_Init( SDL_INIT_VIDEO ) == -1 )
 	{
 		std::cout << "[SDL Init]Error while initializing SDL: " << SDL_GetError() << std::endl;
+		return 1;
+	}
+	
+	if( TTF_Init() == -1 ) {
+		printf("TTF_Init: %s\n", TTF_GetError());
 		return 1;
 	}
 	

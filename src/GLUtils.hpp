@@ -9,6 +9,7 @@
 #include <GL/glew.h>
 
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 
 /* 
 
@@ -114,7 +115,7 @@ GLuint TextureFromFile(const char* filename)
 		std::cout << "[TextureFromFile] Error while loading image: " << filename << std::endl;
 		return 0;
 	}
-
+	// TODO: fix this (can't be determined compile time)
 	#if SDL_BYTEORDER == SDL_LIL_ENDIAN
 		if ( loaded_img->format->BytesPerPixel == 4 )
 			img_mode = GL_BGRA;
@@ -129,13 +130,60 @@ GLuint TextureFromFile(const char* filename)
 
     GLuint tex;
     glGenTextures(1, &tex);
-  
+
     glBindTexture(GL_TEXTURE_2D, tex);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, loaded_img->w, loaded_img->h, img_mode, GL_UNSIGNED_BYTE, loaded_img->pixels);
-  
+
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-  
+
+	SDL_FreeSurface( loaded_img );
+
+    return tex;
+}
+
+GLuint PointtableFromFile(const char* filename, int coins, int diamonds)
+{
+	SDL_Surface* loaded_img = IMG_Load(filename);
+
+	int img_mode = 0;
+	
+	if ( loaded_img == 0 )
+	{
+		std::cout << "[TextureFromFile] Error while loading image: " << filename << std::endl;
+		return 0;
+	}
+
+	#if SDL_BYTEORDER != SDL_LIL_ENDIAN
+		if ( loaded_img->format->BytesPerPixel == 4 )
+			img_mode = GL_BGRA;
+		else
+			img_mode = GL_BGR;
+	#else
+		if ( loaded_img->format->BytesPerPixel == 4 )
+			img_mode = GL_RGBA;
+		else
+			img_mode = GL_RGB;
+	#endif
+	
+	TTF_Font* font = TTF_OpenFont("textures/font.ttf", 50);
+	SDL_Surface* text1 = TTF_RenderText_Solid(font, std::to_string(coins).c_str(), {0,0,0});
+	SDL_Surface* text2 = TTF_RenderText_Solid(font, std::to_string(diamonds).c_str(), {0,0,0});
+	
+	SDL_Rect renderQuad = { 100, 17, 40, 40 };
+	SDL_BlitSurface(text1, 0, loaded_img, &renderQuad);
+	renderQuad = { 100, 77, 40, 40 };
+	SDL_BlitSurface(text2, 0, loaded_img, &renderQuad);
+	
+    GLuint tex;
+    glGenTextures(1, &tex);
+
+    glBindTexture(GL_TEXTURE_2D, tex);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, loaded_img->w, loaded_img->h, img_mode, GL_UNSIGNED_BYTE, loaded_img->pixels);
+
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+
 	SDL_FreeSurface( loaded_img );
 
     return tex;
