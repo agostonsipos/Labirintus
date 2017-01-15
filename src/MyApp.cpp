@@ -1,4 +1,4 @@
-#include "MyApp.h"
+#include "MyApp.hpp"
 #include "GLUtils.hpp"
 
 #include <vector>

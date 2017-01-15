@@ -1,4 +1,4 @@
-#include "ObjParser_OGL3.h"
+#include "ObjParser_OGL3.hpp"
 
 #include <string>
 

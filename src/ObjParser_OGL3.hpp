@@ -8,7 +8,7 @@
 #include <map>
 #include <glm/glm.hpp>
 
-#include "Mesh_OGL3.h"
+#include "Mesh_OGL3.hpp"
 
 class ObjParser
 {

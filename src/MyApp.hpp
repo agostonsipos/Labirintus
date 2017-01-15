@@ -17,8 +17,8 @@
 #include <glm/gtx/transform.hpp>
 
 // mesh
-#include "ObjParser_OGL3.h"
-#include "gShaderProgram.h"
+#include "ObjParser_OGL3.hpp"
+#include "gShaderProgram.hpp"
 
 struct Suzanne{
 	float x;

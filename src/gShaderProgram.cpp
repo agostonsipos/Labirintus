@@ -1,4 +1,4 @@
-#include "gShaderProgram.h"
+#include "gShaderProgram.hpp"
 
 #include <iostream>
 #include <fstream>

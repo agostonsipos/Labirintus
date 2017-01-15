@@ -9,7 +9,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "MyApp.h"
+#include "MyApp.hpp"
 
 void exitProgram()
 {

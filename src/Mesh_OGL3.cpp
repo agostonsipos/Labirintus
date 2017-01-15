@@ -1,4 +1,4 @@
-#include "Mesh_OGL3.h"
+#include "Mesh_OGL3.hpp"
 
 Mesh::Mesh(void)
 {
