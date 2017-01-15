@@ -11,6 +11,8 @@ src/Mesh_OGL3.cpp
 src/GLUtils.hpp
 src/gShaderProgram.hpp
 src/gShaderProgram.cpp
+src/GameObjects.hpp
+src/GameObjects.cpp
 )
 
 set(tarver "x86")

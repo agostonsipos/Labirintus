@@ -68,15 +68,14 @@ void Mesh::addTransformAttribute(int attr, std::vector<glm::mat4>& _matrices)
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	glBufferData(GL_ARRAY_BUFFER, _matrices.size() * sizeof(glm::mat4), &_matrices[0], GL_STATIC_DRAW);
 	
-	GLsizei vec4Size = sizeof(glm::vec4);
 	glEnableVertexAttribArray(attr);
-	glVertexAttribPointer(attr, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (GLvoid*)0);
+	glVertexAttribPointer(attr+0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(glm::vec4), (void*)0);
 	glEnableVertexAttribArray(attr+1);
-	glVertexAttribPointer(attr+1, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (GLvoid*)(vec4Size));
+	glVertexAttribPointer(attr+1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(glm::vec4), (void*)(sizeof(glm::vec4)));
 	glEnableVertexAttribArray(attr+2);
-	glVertexAttribPointer(attr+2, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (GLvoid*)(2 * vec4Size));
+	glVertexAttribPointer(attr+2, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(glm::vec4), (void*)(2 * sizeof(glm::vec4)));
 	glEnableVertexAttribArray(attr+3);
-	glVertexAttribPointer(attr+3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (GLvoid*)(3 * vec4Size));
+	glVertexAttribPointer(attr+3, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(glm::vec4), (void*)(3 * sizeof(glm::vec4)));
 
 	glVertexAttribDivisor(attr+0, 1);
 	glVertexAttribDivisor(attr+1, 1);

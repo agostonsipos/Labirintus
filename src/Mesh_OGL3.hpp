@@ -22,6 +22,8 @@ public:
 	void draw();
 	void drawInstanced(GLsizei);
 	
+	bool inited = false;
+	
 	void addTransformAttribute(int attr, std::vector<glm::mat4>& _matrices);
 
 	void addVertex(const Vertex& vertex) {

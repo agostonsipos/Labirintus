@@ -9,7 +9,6 @@ CMyApp::CMyApp(void)
 {
 	m_vaoID = 0;
 	m_vboID = 0;
-	m_programID = 0;
 	m_floor_textureID = 0;
 
 	m_suzanne = 0;
@@ -34,7 +33,7 @@ bool CMyApp::Init()
 	glEnable(GL_DEPTH_TEST);
 	glCullFace(GL_BACK);
 
-	Vertex vert[] =
+	Mesh::Vertex vert[] =
 	{ 
 		{glm::vec3(-10, 0, -10), glm::vec3( 0, 1, 0), glm::vec2(0, 0)},
 		{glm::vec3(-10, 0,  10), glm::vec3( 0, 1, 0), glm::vec2(0, 1)},
@@ -57,15 +56,15 @@ bool CMyApp::Init()
 
 	// position attributes
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3,	GL_FLOAT, GL_FALSE,	sizeof(Vertex),	0); 
+	glVertexAttribPointer(0, 3,	GL_FLOAT, GL_FALSE,	sizeof(Mesh::Vertex), 0); 
 
 	//surface normal attributes
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,	sizeof(Vertex),	(void*)(sizeof(glm::vec3)) );
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,	sizeof(Mesh::Vertex), (void*)(sizeof(glm::vec3)) );
 
 	//texture coordinates
 	glEnableVertexAttribArray(2); 
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(glm::vec3)) );
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)(2*sizeof(glm::vec3)) );
 
 	glGenBuffers(1, &m_ibID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibID);
@@ -78,8 +77,6 @@ bool CMyApp::Init()
 	m_program = createShaderProgram("shaders/shader.vert", "shaders/shader.frag");
 	
 	m_inst_program = createShaderProgram("shaders/instanced.vert", "shaders/shader.frag");
-
-	m_matProj = glm::perspective( 45.0f, 640/480.0f, 1.0f, 10000.0f );
 
 	m_floor_textureID = TextureFromFile("textures/floor.bmp");
 	m_bush_texture_ID = TextureFromFile("textures/bush.bmp");
@@ -105,10 +102,13 @@ bool CMyApp::Init()
 	m_shot = ObjParser::parse("models/shot.obj");
 	m_shot->initBuffers();
 
+	srand(time(NULL));
 	genBushes();
 	genCoins();
 	genDiamonds();
-	suzpos = { rand() % 50, rand() % 50, rand() % 4 };
+	position = { rand() % 50, rand() % 50, rand() % 4 };
+
+	m_matProj = glm::perspective( 45.0f, 640/480.0f, 1.0f, 10000.0f );
 
 	return true;
 }
@@ -117,6 +117,7 @@ void CMyApp::Clean()
 {
 	delete m_suzanne;
 	delete m_bush;
+	delete m_bush_backup;
 	delete m_coin;
 	delete m_diamond;
 	delete m_shot;
@@ -131,100 +132,100 @@ void CMyApp::Clean()
 
 void CMyApp::Update()
 {
+	// Moving player
 	float v = 0.002f;
 	if (mega) v *= 1.5f;
-	if (moving[0]){
-		suzpos += Suzanne(v * (SDL_GetTicks() - t)*m_up.x, v * (SDL_GetTicks() - t)* m_up.z, 0.0f);
+	if (moving[0]){ // forward
+		position += PlayerObject(v * (SDL_GetTicks() - t)*m_up.x, v * (SDL_GetTicks() - t)* m_up.z, 0.0f);
 		t = SDL_GetTicks();
 		if (t - t0 > 1/v){
 			moving[0] = false;
-			suzpos.x = roundf(suzpos.x);
-			suzpos.y = roundf(suzpos.y);
-			CheckMoney();
+			position.removeNumericalErrors();
+			CheckCoinDiamond();
 		}
 	}
-	if (moving[1]){
-		suzpos += Suzanne(-v * (SDL_GetTicks() - t)*m_up.x, -v * (SDL_GetTicks() - t)* m_up.z, 0.0f);
+	if (moving[1]){ // backward
+		position += PlayerObject(-v * (SDL_GetTicks() - t)*m_up.x, -v * (SDL_GetTicks() - t)* m_up.z, 0.0f);
 		t = SDL_GetTicks();
 		if (t - t0 > 1/v){
 			moving[1] = false;
-			suzpos.x = roundf(suzpos.x);
-			suzpos.y = roundf(suzpos.y);
-			CheckMoney();
+			position.removeNumericalErrors();
+			CheckCoinDiamond();
 		}
 	}
-	if (moving[2]){
-		suzpos.ir += v * (SDL_GetTicks()-t);
+	if (moving[2]){ // turning left
+		position.dir += v * (SDL_GetTicks()-t);
 		t = SDL_GetTicks();
 		if (t - t0 > 1/v){
 			moving[2] = false;
-			suzpos.ir = (float)roundf(suzpos.ir);
+			position.removeNumericalErrors();
 		}
 	}
-	if (moving[3]){
-		suzpos.ir -= v * (SDL_GetTicks() - t);
+	if (moving[3]){ // turning right
+		position.dir -= v * (SDL_GetTicks() - t);
 		t = SDL_GetTicks();
 		if (t - t0 > 1/v){
 			moving[3] = false;
-			suzpos.ir = (float)roundf(suzpos.ir);
+			position.removeNumericalErrors();
 		}
 	}
+	// Moving shots
 	for (auto it = m_list_shots.begin(); it != m_list_shots.end();){
 		if (it->x<-1 || it->y<-1 || it->x>50 || it->y>50 || HitWall(*it)){
 			it = m_list_shots.erase(it);
 			continue;
 		}
-		if ((int)it->ir % 4 == 0){
-			(*it) += Suzanne(0.0f, 0.01*(SDL_GetTicks() - ts), 0.0f);
+		if ((int)it->dir % 4 == 0){
+			(*it) += Shot(0.0f, 0.01*(SDL_GetTicks() - ts), 0.0f);
 		}
-		if ((int)it->ir % 4 == 1){
-			*it += Suzanne(0.01*(SDL_GetTicks() - ts), 0.0f, 0.0f);
+		if ((int)it->dir % 4 == 1){
+			*it += Shot(0.01*(SDL_GetTicks() - ts), 0.0f, 0.0f);
 		}
-		if ((int)it->ir % 4 == 2){
-			*it += Suzanne(0.0f, -0.01*(SDL_GetTicks() - ts), 0.0f);
+		if ((int)it->dir % 4 == 2){
+			*it += Shot(0.0f, -0.01*(SDL_GetTicks() - ts), 0.0f);
 		}
-		if ((int)it->ir % 4 == 3){
-			*it += Suzanne(-0.01*(SDL_GetTicks() - ts), 0.0f, 0.0f);
+		if ((int)it->dir % 4 == 3){
+			*it += Shot(-0.01*(SDL_GetTicks() - ts), 0.0f, 0.0f);
 		}
 		++it;
 	}
 	ts = SDL_GetTicks();
+	// Setting up camera
 	if (win){
 		float c = cosf(3.14159 / 2 * SDL_GetTicks() / 2000.0f);
 		float s = sinf(3.14159 / 2 * SDL_GetTicks() / 2000.0f);
-		m_eye = glm::vec3(suzpos.x * 20 - s * 10, 6 + 4 * c * s, suzpos.y * 20 - c * 10);
+		m_eye = glm::vec3(position.x * 20 - s * 10, 6 + 4 * c * s, position.y * 20 - c * 10);
 		m_up = glm::vec3(s, 0, c);
-		glm::vec3 m_at = glm::vec3(suzpos.x * 20, 4, suzpos.y * 20);
+		glm::vec3 m_at = glm::vec3(position.x * 20, 4, position.y * 20);
 		m_matView = glm::lookAt(m_eye, m_at, m_up);
 	}
 	else if (lose){
-		glm::vec3 m_at = glm::vec3(suzpos.x * 20, 0, suzpos.y * 20);
+		glm::vec3 m_at = glm::vec3(position.x * 20, 0, position.y * 20);
 		Uint32 dt = glm::clamp(1000.0f-float(SDL_GetTicks() - tl), 0.0f, 1000.0f);
-		float c = cosf(3.14159 / 2 * suzpos.ir);
-		float s = sinf(3.14159 / 2 * suzpos.ir);
-		m_eye = glm::vec3(suzpos.x * 20 + s * 10 + c*dt / 100.0f, 5 + dt / 100.0f, suzpos.y * 20 + c * 10 + s*dt / 100.0f);
+		float c = cosf(3.14159 / 2 * position.dir);
+		float s = sinf(3.14159 / 2 * position.dir);
+		m_eye = glm::vec3(position.x * 20 + s * 10 + c*dt / 100.0f, 5 + dt / 100.0f, position.y * 20 + c * 10 + s*dt / 100.0f);
 		m_up = glm::vec3(-s, 0, -c);
 		m_matView = glm::lookAt(m_eye, m_at, m_up);
 	}
 	else if (camera){
-		float c = cosf(3.14159 / 2 * suzpos.ir);
-		float s = sinf(3.14159 / 2 * suzpos.ir);
-		m_eye = glm::vec3(suzpos.x * 20 - s * 30, 30, suzpos.y * 20 - c * 30);
+		float c = cosf(3.14159 / 2 * position.dir);
+		float s = sinf(3.14159 / 2 * position.dir);
+		m_eye = glm::vec3(position.x * 20 - s * 30, 30, position.y * 20 - c * 30);
 		m_up = glm::vec3(s, 0, c);
-		glm::vec3 m_at = glm::vec3(suzpos.x * 20, 0, suzpos.y * 20);
+		glm::vec3 m_at = glm::vec3(position.x * 20, 0, position.y * 20);
 		m_matView = glm::lookAt(m_eye, m_at, m_up);
 	}
 	else{
-		float c = cosf(3.14159 / 2 * suzpos.ir);
-		float s = sinf(3.14159 / 2 * suzpos.ir);
+		float c = cosf(3.14159 / 2 * position.dir);
+		float s = sinf(3.14159 / 2 * position.dir);
+		m_eye = glm::vec3(position.x * 20, 200, position.y * 20-1);
 		m_up = glm::vec3(s, 0, c);
-		m_matView = glm::lookAt(glm::vec3(suzpos.x * 20, 200, suzpos.y * 20-1), glm::vec3(suzpos.x * 20, 0, suzpos.y * 20), glm::vec3(0, 1, 0));
+		m_matView = glm::lookAt(m_eye, glm::vec3(position.x * 20, 0, position.y * 20), glm::vec3(0, 1, 0));
 	}
-
+	// Setting light positions
 	sunpos = glm::vec3(1000.0f*sinf(SDL_GetTicks() / 20000.0f), 1000.0f*cosf(SDL_GetTicks() / 20000.0f), 0.0f);
 	moonpos = glm::vec3(-1000.0f*sinf(SDL_GetTicks() / 20000.0f), -1000.0f*cosf(SDL_GetTicks() / 20000.0f), 0.0f);
-
-	if (SDL_GetTicks() - tm > 10000) mega = false;
 
 	m_program.On();
 	m_program.SetUniform("Sp", sunpos);
@@ -232,6 +233,7 @@ void CMyApp::Update()
 	m_program.SetUniform("eye", m_eye);
 	m_program.Off();
 
+	if (SDL_GetTicks() - tm > 10000) mega = false;
 }
 
 
@@ -269,10 +271,10 @@ void CMyApp::DrawBushes(bool detailed){
 	std::vector<glm::mat4> worldIT_range;
 	for (auto it : m_list_bushes){
 		if(detailed)
-			m_matWorld = glm::translate<float>(glm::vec3(it.ir?-10:0,0,it.ir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.ir?M_PI_2:0,glm::vec3(0,1,0))
+			m_matWorld = glm::translate<float>(glm::vec3(it.dir?-10:0,0,it.dir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.dir?M_PI_2:0,glm::vec3(0,1,0))
 				*glm::translate<float>(glm::vec3(0,4,0))*glm::scale<float>(glm::vec3(30, 50, 20))*glm::translate<float>(glm::vec3(0,-0.1,0));
 		else
-			m_matWorld = glm::translate<float>(glm::vec3(it.ir?-10:0,0,it.ir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.ir?M_PI_2:0,glm::vec3(0,1,0))
+			m_matWorld = glm::translate<float>(glm::vec3(it.dir?-10:0,0,it.dir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.dir?M_PI_2:0,glm::vec3(0,1,0))
 				*glm::translate<float>(glm::vec3(0,4,0))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(5.0, 3.0, 5.0));
 		world_range.push_back(m_matWorld);
 		worldIT_range.push_back(glm::transpose(glm::inverse(m_matWorld)));
@@ -366,10 +368,10 @@ void CMyApp::DrawSuzanne()
 
 	glm::mat4 size;
 	if (mega)
-		size = glm::scale<float>(glm::vec3(4.5f, 4.5f, 4.5f));
-	else size = glm::scale<float>(glm::vec3(3, 3, 3));
+		size = glm::scale<float>(glm::vec3(6,6,6));
+	else size = glm::scale<float>(glm::vec3(4,4,4));
 
-	m_matWorld = glm::translate<float>(glm::vec3(suzpos.x*20, 3, suzpos.y*20))*jump*size*glm::rotate<float>(suzpos.ir*M_PI_2,glm::vec3(0,1,0));
+	m_matWorld = glm::translate<float>(glm::vec3(position.x*20, 3, position.y*20))*jump*size*glm::rotate<float>(position.dir*M_PI_2,glm::vec3(0,1,0));
 	glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 	glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
 	
@@ -399,7 +401,6 @@ void CMyApp::DrawShots(){
 		m_program.SetUniform("WorldIT", WIT);
 		m_program.SetTexture("texture", 0, m_fire_texture_ID);
 		
-		
 		m_shot->draw();
 	}
 	m_program.SetTexture("texture", 0, 0);
@@ -423,7 +424,7 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 		switch (key.keysym.sym){
 		case SDLK_w:
 		case SDLK_UP:
-			if (CheckWall((Coin)suzpos, (Coin)suzpos + Coin(m_up.x, m_up.z))){
+			if (CheckWallBetween((FixedObject)position, (FixedObject)position + FixedObject(m_up.x, m_up.z))){
 				moving[0] = true;
 				t = SDL_GetTicks();
 				t0 = t;
@@ -431,7 +432,7 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 			break;
 		case SDLK_s:
 		case SDLK_DOWN:
-			if (CheckWall((Coin)suzpos, (Coin)suzpos + Coin(-1 * m_up.x, -1 * m_up.z))){
+			if (CheckWallBetween((FixedObject)position, (FixedObject)position + FixedObject(-m_up.x, -m_up.z))){
 				moving[1] = true;
 				t = SDL_GetTicks();
 				t0 = t;
@@ -465,9 +466,9 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 			tl = SDL_GetTicks();
 			break;
 		case SDLK_SPACE:
-			while (suzpos.ir < 0) suzpos.ir += 4;
+			while (position.dir < 0) position.dir += 4;
 			if (mega){
-				m_list_shots.push_back(suzpos);
+				m_list_shots.push_back(Shot(position.x, position.y, position.dir));
 			}
 			break;
 		case SDLK_F11:
@@ -510,55 +511,47 @@ void CMyApp::Resize(int _w, int _h)
 void CMyApp::genBushes(){
 	srand(time(NULL));
 	for(int i = 0; i < 50; ++i){
-		m_list_bushes.insert({ i, 0, 0 });
-		m_list_bushes.insert({ 0, i, 1 });
-		m_list_bushes.insert({ i, 50, 0 });
-		m_list_bushes.insert({ 50, i, 1 });
+		m_list_bushes.insert(Bush( i, 0, 0 ));
+		m_list_bushes.insert(Bush( 0, i, 1 ));
+		m_list_bushes.insert(Bush( i, 50, 0 ));
+		m_list_bushes.insert(Bush( 50, i, 1 ));
 	}
-	int i=0;
 	do{
 		Bush b = { rand() % 50, rand() % 50, rand() % 2 };
 		m_list_bushes.insert(b);
-		++i;
 	} while (m_list_bushes.size() != 1000);
 }
 
 void CMyApp::genCoins(){
-	srand(time(NULL));
-	for (int i = 0; i < 100; ++i){
-		do{
-			Coin c = { rand() % 50, rand() % 50 };
-			if (m_list_coins.find(c) == m_list_coins.end())
-				m_list_coins.insert(c);
-		} while (m_list_coins.size() != i + 1);
-	}
+	do{
+		Coin c = Coin( rand() % 50, rand() % 50 );
+		if (m_list_coins.find(c) == m_list_coins.end())
+			m_list_coins.insert(c);
+	} while (m_list_coins.size() != 100);
 }
 
 void CMyApp::genDiamonds(){
-	srand(time(NULL));
-	for (int i = 0; i < 10; ++i){
-		do{
-			Coin d = { rand() % 50, rand() % 50 };
-			if (m_list_coins.find(d) == m_list_coins.end() && m_list_diamonds.find(d) == m_list_diamonds.end()){
-				m_list_diamonds.insert(d);
-			}
-		} while (m_list_diamonds.size() != i + 1);
-	}
+	do{
+		Diamond d = Diamond( rand() % 50, rand() % 50 );
+		if (m_list_coins.find(d) == m_list_coins.end() && m_list_diamonds.find(d) == m_list_diamonds.end()){
+			m_list_diamonds.insert(d);
+		}
+	} while (m_list_diamonds.size() != 10);
 }
 
-bool CMyApp::HitWall(Suzanne s){
-	Suzanne z = s;
-	if ((int)s.ir % 4 == 0){
-		z += Suzanne(0.0f, 1.0f, 0.0f);
+bool CMyApp::HitWall(Shot s){
+	Shot z = s;
+	if ((int)s.dir % 4 == 0){
+		z += Shot(0.0f, 1.0f, 0.0f);
 	}
-	if ((int)s.ir % 4 == 1){
-		z += Suzanne(1.0f, 0.0f, 0.0f);
+	if ((int)s.dir % 4 == 1){
+		z += Shot(1.0f, 0.0f, 0.0f);
 	}
-	if ((int)s.ir % 4 == 2){
-		z += Suzanne(0.0f, -1.0f, 0.0f);
+	if ((int)s.dir % 4 == 2){
+		z += Shot(0.0f, -1.0f, 0.0f);
 	}
-	if ((int)s.ir % 4 == 3){
-		z += Suzanne(-1.0f, 0.0f, 0.0f);
+	if ((int)s.dir % 4 == 3){
+		z += Shot(-1.0f, 0.0f, 0.0f);
 	}
 	Bush w = { s.x >= z.x ? static_cast<int>(s.x) : static_cast<int>(z.x), s.y >= z.y ? static_cast<int>(s.y) : static_cast<int>(z.y), s.x == z.x ? 0 : 1 };
 	if (m_list_bushes.find(w) != m_list_bushes.end()){
@@ -569,19 +562,19 @@ bool CMyApp::HitWall(Suzanne s){
 }
 
 
-bool CMyApp::CheckWall(Coin a, Coin b){
-	Bush w = { a.x >= b.x ? a.x : b.x, a.y >= b.y ? a.y : b.y, a.x == b.x ? 0 : 1 };
+bool CMyApp::CheckWallBetween(FixedObject a, FixedObject b){
+	Border w = { a.x >= b.x ? a.x : b.x, a.y >= b.y ? a.y : b.y, a.x == b.x ? 0 : 1 };
 	return b.x >= 0 && b.y >= 0 && b.x < 50 && b.y < 50 && m_list_bushes.find(w) == m_list_bushes.end();
 }
 
-void CMyApp::CheckMoney(){
-	auto it = m_list_coins.find(Coin(suzpos));
+void CMyApp::CheckCoinDiamond(){
+	auto it = m_list_coins.find(Coin(position));
 	if (it != m_list_coins.end()){
 		++money;
 		std::cout << "Money: " << money << std::endl;
 		m_list_coins.erase(it);
 	}
-	auto id = m_list_diamonds.find(Coin(suzpos));
+	auto id = m_list_diamonds.find(Diamond(position));
 	if (id != m_list_diamonds.end()){
 		++diamonds;
 		std::cout << "Diamonds: " << diamonds << std::endl;
@@ -589,21 +582,5 @@ void CMyApp::CheckMoney(){
 	}
 	if (diamonds == 10){
 		win = true;
-	}
-}
-
-bool operator<(Bush a, Bush b){
-	std::vector<int> v1 = { a.x, a.y, a.ir }, v2 = { b.x, b.y, b.ir };
-	return std::lexicographical_compare(v1.begin(), v1.end(), v2.begin(), v2.end());
-}
-bool operator<(Coin a, Coin b){
-	if (a.x < b.x){
-		return true;
-	}
-	else if (a.x > b.x){
-		return false;
-	}
-	else{
-		return a.y < b.y;
 	}
 }
