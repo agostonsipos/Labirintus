@@ -148,6 +148,8 @@ int main( int argc, char* args[] )
 		SDL_GL_SwapWindow(win);
 		
 		unsigned spf = SDL_GetTicks() - t;
+		if (spf < 16 ) SDL_Delay(16-spf);
+		spf = SDL_GetTicks() - t;
 		float fps = 1000.0/spf;
 		std::stringstream window_title;
 		window_title << std::setprecision(2) << "OpenGL " << glVersion[0] << "." << glVersion[1] << " " << fps << " FPS";
