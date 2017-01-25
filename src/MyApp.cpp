@@ -251,7 +251,7 @@ void CMyApp::DrawGround()
 		for (int j = 0; j < 50; ++j){
 			m_matWorld = glm::translate<float>(glm::vec3(20.f * i, 0.f, 20.f * j));
 			glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
-			glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
+			glm::mat4 WIT = glm::mat4(1.0);
 			
 			m_program.SetUniform("MVP", mvp);
 			m_program.SetUniform("world", m_matWorld);
@@ -272,11 +272,11 @@ void CMyApp::DrawBushes(bool detailed){
 	std::vector<glm::mat4> worldIT_range;
 	for (auto it : m_list_bushes){
 		if(detailed)
-			m_matWorld = glm::translate<float>(glm::vec3(it.dir?-10:0,0,it.dir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.dir?M_PI_2:0,glm::vec3(0,1,0))
-				*glm::translate<float>(glm::vec3(0,4,0))*glm::scale<float>(glm::vec3(30, 50, 20))*glm::translate<float>(glm::vec3(0,-0.1,0));
+			m_matWorld = glm::translate<float>(glm::vec3(it.x*20+(it.dir?-10:0), 4, it.y*20+(it.dir?0:-10)))*glm::rotate<float>(it.dir?M_PI_2:0,glm::vec3(0,1,0))
+				*glm::scale<float>(glm::vec3(30, 50, 20))*glm::translate<float>(glm::vec3(0,-0.1,0));
 		else
-			m_matWorld = glm::translate<float>(glm::vec3(it.dir?-10:0,0,it.dir?10:0))*glm::translate<float>(glm::vec3(it.x*20, 0.0, it.y*20-10.0))*glm::rotate<float>(it.dir?M_PI_2:0,glm::vec3(0,1,0))
-				*glm::translate<float>(glm::vec3(0,4,0))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(5.0, 3.0, 5.0));
+			m_matWorld = glm::translate<float>(glm::vec3(it.x*20+(it.dir?-10:0), 4, it.y*20+(it.dir?0:-10)))*glm::rotate<float>(it.dir?M_PI_2:0,glm::vec3(0,1,0))
+				*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(5.0, 3.0, 5.0));
 		world_range.push_back(m_matWorld);
 		worldIT_range.push_back(glm::transpose(glm::inverse(m_matWorld)));
 		
@@ -333,7 +333,7 @@ void CMyApp::DrawDiamonds(){
 	m_program.On();
 	m_program.SetUniform("kd", glm::vec4(2.0, 2.0, 3.0, 1.0));
 	for (auto it : m_list_diamonds){
-		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 2000.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0))*glm::scale<float>(glm::vec3(2, 2, 2));
+		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 2000.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(10, 10, 10))*glm::rotate<float>(M_PI_2, glm::vec3(1, 0, 0));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
 		
@@ -393,7 +393,7 @@ void CMyApp::DrawShots(){
 	m_program.On();
 	for (auto it : m_list_shots){
 		m_program.SetUniform("kd", glm::vec4(2.0, 2.0, 3.0, 1.0));
-		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::rotate<float>(2 * 3.14159*SDL_GetTicks() / 100.0f, glm::vec3(0, 1, 0))*glm::scale<float>(glm::vec3(5, 5, 5));
+		m_matWorld = glm::translate<float>(glm::vec3(it.x * 20, 2, it.y * 20))*glm::scale<float>(glm::vec3(5, 5, 5));
 		glm::mat4 mvp = m_matProj * m_matView * m_matWorld;
 		glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
 		
@@ -425,7 +425,7 @@ void CMyApp::DrawPoints()
 
 	m_matWorld = glm::translate<float>(glm::vec3(-0.74, 0.74, 0))*glm::scale<float>(glm::vec3(0.025,0.025,0.025))*glm::rotate<float>(M_PI_2, glm::vec3(1,0,0));
 	glm::mat4 mvp = m_matWorld;
-	glm::mat4 WIT = glm::transpose(glm::inverse(m_matWorld));
+	glm::mat4 WIT = glm::mat4(1.0);
 	
 	m_program.SetUniform("MVP", mvp);
 	m_program.SetUniform("world", m_matWorld);
