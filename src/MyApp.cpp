@@ -493,7 +493,6 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 				mega = true;
 				tm = SDL_GetTicks();
 				money -= 10;
-				std::cout << "Money: " << money << std::endl;
 				m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
 			}
 			break;
@@ -509,7 +508,6 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 			break;
 		case SDLK_F11:
 			++money;
-			std::cout << "Money: " << money << std::endl;
 			m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
 			break;
 		case SDLK_F12:
@@ -608,14 +606,12 @@ void CMyApp::CheckCoinDiamond(){
 	auto it = m_list_coins.find(Coin(position));
 	if (it != m_list_coins.end()){
 		++money;
-		std::cout << "Money: " << money << std::endl;
 		m_list_coins.erase(it);
 		m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
 	}
 	auto id = m_list_diamonds.find(Diamond(position));
 	if (id != m_list_diamonds.end()){
 		++diamonds;
-		std::cout << "Diamonds: " << diamonds << std::endl;
 		m_list_diamonds.erase(id);
 		m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
 	}
