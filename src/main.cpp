@@ -15,9 +15,6 @@
 void exitProgram()
 {
 	SDL_Quit();
-
-	std::cout << "Press Enter to exit..." << std::endl;
-	std::cin.get();
 }
 
 int main( int argc, char* args[] )
@@ -75,7 +72,7 @@ int main( int argc, char* args[] )
 	int glVersion[2] = {-1, -1}; 
 	glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]); 
 	glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]); 
-	std::cout << "Running OpenGL " << glVersion[0] << "." << glVersion[1] << std::endl;
+	//std::cout << "Running OpenGL " << glVersion[0] << "." << glVersion[1] << std::endl;
 
 	if ( glVersion[0] == -1 && glVersion[1] == -1 )
 	{
@@ -87,9 +84,7 @@ int main( int argc, char* args[] )
 		return 1;
 	}
 
-	std::stringstream window_title;
-	window_title << "OpenGL " << glVersion[0] << "." << glVersion[1];
-	SDL_SetWindowTitle(win, window_title.str().c_str());
+	SDL_SetWindowTitle(win, "Labirintus");
 
 
 	bool quit = false;
@@ -147,14 +142,15 @@ int main( int argc, char* args[] )
 
 		SDL_GL_SwapWindow(win);
 		
-		unsigned spf = SDL_GetTicks() - t;
+		// FPS measurement
+		/*unsigned spf = SDL_GetTicks() - t;
 		if (spf < 16 ) SDL_Delay(16-spf);
 		spf = SDL_GetTicks() - t;
 		float fps = 1000.0/spf;
 		std::stringstream window_title;
 		window_title << std::setprecision(2) << "OpenGL " << glVersion[0] << "." << glVersion[1] << " " << fps << " FPS";
 		SDL_SetWindowTitle(win, window_title.str().c_str());
-		t = SDL_GetTicks();
+		t = SDL_GetTicks();*/
 	}
 
 

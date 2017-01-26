@@ -18,6 +18,9 @@ src/GameObjects.cpp
 set(tarver "x86")
 set(CMAKE_CXX_FLAGS "-std=c++11 -O2")
 
+# For creating installable binary on Linux
+#add_definitions(-D__INSTALL)
+
 if(UNIX)
 	set(libdir "/usr/lib/")
 	include_directories(/usr/include/SDL2)

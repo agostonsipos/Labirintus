@@ -11,6 +11,12 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 
+#if defined (__linux__) && defined (__INSTALL)
+#define PATH std::string("/usr/share/Labirintus/")
+#else
+#define PATH
+#endif
+
 /* 
 
 According to http://www.opengl-tutorial.org/
@@ -104,9 +110,9 @@ GLuint loadProgramVSGSFS(const char* _fileNameVS, const char* _fileNameGS, const
 	return program_ID;
 }
 
-GLuint TextureFromFile(const char* filename)
+GLuint TextureFromFile(const std::string& filename)
 {
-	SDL_Surface* loaded_img = IMG_Load(filename);  
+	SDL_Surface* loaded_img = IMG_Load(filename.c_str());  
 
 	int img_mode = 0;
 	
@@ -142,9 +148,9 @@ GLuint TextureFromFile(const char* filename)
     return tex;
 }
 
-GLuint PointtableFromFile(const char* filename, int coins, int diamonds)
+GLuint PointtableFromFile(const std::string& filename, int coins, int diamonds)
 {
-	SDL_Surface* loaded_img = IMG_Load(filename);
+	SDL_Surface* loaded_img = IMG_Load(filename.c_str());
 
 	int img_mode = 0;
 	
@@ -166,7 +172,8 @@ GLuint PointtableFromFile(const char* filename, int coins, int diamonds)
 			img_mode = GL_RGB;
 	#endif
 	
-	TTF_Font* font = TTF_OpenFont("textures/font.ttf", 50);
+	std::string fontfile = PATH+"textures/font.ttf";
+	TTF_Font* font = TTF_OpenFont(fontfile.c_str(), 50);
 	SDL_Surface* text1 = TTF_RenderText_Solid(font, std::to_string(coins).c_str(), {0,0,0});
 	SDL_Surface* text2 = TTF_RenderText_Solid(font, std::to_string(diamonds).c_str(), {0,0,0});
 	

@@ -4,11 +4,11 @@
 
 using namespace std;
 
-Mesh* ObjParser::parse(const char* fileName)
+Mesh* ObjParser::parse(const std::string& fileName)
 {
 	ObjParser theParser;
 
-	theParser.ifs.open(fileName, ios::in|ios::binary);
+	theParser.ifs.open(fileName.c_str(), ios::in|ios::binary);
 	if (!theParser.ifs)
 		throw(EXC_FILENOTFOUND);
 

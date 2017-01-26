@@ -74,33 +74,33 @@ bool CMyApp::Init()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
-	m_program = createShaderProgram("shaders/shader.vert", "shaders/shader.frag");
+	m_program = createShaderProgram(PATH+"shaders/shader.vert", PATH+"shaders/shader.frag");
 	
-	m_inst_program = createShaderProgram("shaders/instanced.vert", "shaders/shader.frag");
+	m_inst_program = createShaderProgram(PATH+"shaders/instanced.vert", PATH+"shaders/shader.frag");
 
-	m_floor_textureID = TextureFromFile("textures/floor.bmp");
-	m_bush_texture_ID = TextureFromFile("textures/bush.bmp");
-	m_coin_texture_ID = TextureFromFile("textures/coin.bmp");
-	m_diamond_texture_ID = TextureFromFile("textures/diamond.bmp");
-	m_fire_texture_ID = TextureFromFile("textures/fire.bmp");
-	m_brown_texture_ID = TextureFromFile("textures/brown.bmp");
-	m_points_texture_ID = PointtableFromFile("textures/pointtable.png", 0, 0);
+	m_floor_textureID = TextureFromFile(PATH+"textures/floor.bmp");
+	m_bush_texture_ID = TextureFromFile(PATH+"textures/bush.bmp");
+	m_coin_texture_ID = TextureFromFile(PATH+"textures/coin.bmp");
+	m_diamond_texture_ID = TextureFromFile(PATH+"textures/diamond.bmp");
+	m_fire_texture_ID = TextureFromFile(PATH+"textures/fire.bmp");
+	m_brown_texture_ID = TextureFromFile(PATH+"textures/brown.bmp");
+	m_points_texture_ID = PointtableFromFile(PATH+"textures/pointtable.png", 0, 0);
 
-	m_suzanne = ObjParser::parse("models/Suzanne.obj");
+	m_suzanne = ObjParser::parse(PATH+"models/Suzanne.obj");
 	m_suzanne->initBuffers();
 
-	m_bush = ObjParser::parse("models/hedge.obj");
+	m_bush = ObjParser::parse(PATH+"models/hedge.obj");
 	m_bush->initBuffers();
-	m_bush_backup = ObjParser::parse("models/bush.obj");
+	m_bush_backup = ObjParser::parse(PATH+"models/bush.obj");
 	m_bush_backup->initBuffers();
 
-	m_coin = ObjParser::parse("models/coin.obj");
+	m_coin = ObjParser::parse(PATH+"models/coin.obj");
 	m_coin->initBuffers();
 
-	m_diamond = ObjParser::parse("models/diamond.obj");
+	m_diamond = ObjParser::parse(PATH+"models/diamond.obj");
 	m_diamond->initBuffers();
 
-	m_shot = ObjParser::parse("models/shot.obj");
+	m_shot = ObjParser::parse(PATH+"models/shot.obj");
 	m_shot->initBuffers();
 
 	srand(time(NULL));
@@ -493,7 +493,7 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 				mega = true;
 				tm = SDL_GetTicks();
 				money -= 10;
-				m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
+				m_points_texture_ID = PointtableFromFile(PATH+"textures/pointtable.png", money, diamonds);
 			}
 			break;
 		case SDLK_k:
@@ -508,7 +508,7 @@ void CMyApp::KeyboardDown(SDL_KeyboardEvent& key)
 			break;
 		case SDLK_F11:
 			++money;
-			m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
+			m_points_texture_ID = PointtableFromFile(PATH+"textures/pointtable.png", money, diamonds);
 			break;
 		case SDLK_F12:
 			win = true;
@@ -607,13 +607,13 @@ void CMyApp::CheckCoinDiamond(){
 	if (it != m_list_coins.end()){
 		++money;
 		m_list_coins.erase(it);
-		m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
+		m_points_texture_ID = PointtableFromFile(PATH+"textures/pointtable.png", money, diamonds);
 	}
 	auto id = m_list_diamonds.find(Diamond(position));
 	if (id != m_list_diamonds.end()){
 		++diamonds;
 		m_list_diamonds.erase(id);
-		m_points_texture_ID = PointtableFromFile("textures/pointtable.png", money, diamonds);
+		m_points_texture_ID = PointtableFromFile(PATH+"textures/pointtable.png", money, diamonds);
 	}
 	if (diamonds == 10){
 		win = true;

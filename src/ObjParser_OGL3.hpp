@@ -13,7 +13,7 @@
 class ObjParser
 {
 public:
-	static Mesh* parse(const char* fileName);
+	static Mesh* parse(const std::string& fileName);
 
 	enum Exception { EXC_FILENOTFOUND };
 private:

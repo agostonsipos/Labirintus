@@ -50,11 +50,11 @@ protected:
 };
 
 
-inline gShaderProgram createShaderProgram(const char* vs_name, const char* fs_name)
+inline gShaderProgram createShaderProgram(const std::string& vs_name, const std::string& fs_name)
 {
 	gShaderProgram program;
-	program.AttachShader(GL_VERTEX_SHADER,		vs_name);
-	program.AttachShader(GL_FRAGMENT_SHADER,	fs_name);
+	program.AttachShader(GL_VERTEX_SHADER,		vs_name.c_str());
+	program.AttachShader(GL_FRAGMENT_SHADER,	fs_name.c_str());
 
 
 	program.BindAttribLoc(0, "vs_in_pos");
