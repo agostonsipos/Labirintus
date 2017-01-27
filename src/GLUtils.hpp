@@ -12,7 +12,7 @@
 #include <SDL_ttf.h>
 
 #if defined (__linux__) && defined (__INSTALL)
-#define PATH std::string("/usr/share/Labirintus/")
+#define PATH std::string("/usr/share/labirintus/")
 #else
 #define PATH
 #endif
